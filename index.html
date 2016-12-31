@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Log Plumber</title>
+    <link rel="stylesheet" href="./assets/styles.css">
+  </head>
+  <body>
+    <nav>
+      <header>
+        <h1>Log
+          <strong>Plumber</strong>
+        </h1>
+      </header>
+      logo here?
+      <div>
+        <h5>
+          Logs to Trees
+        </h5>
+        <button>Turn flat logs to <em>hierarchical logs</em>
+        </button>
+      </div>
+
+      <div>
+        <h5>
+          Misc tasks
+        </h5>
+        <button>Modify and run<em>custom scripts</em>
+        </button>
+      </div>
+
+      <div>
+        <h5>
+          SFX
+        </h5>
+        <button> Sound and Visuals<em>!</em>
+        </button>
+      </div>
+      
+      <footer>
+        Footerrrrr
+      </footer>
+    </nav>
+
+    <main class="content">
+      <section class="section">
+        <header>Maintenance Life</header>
+        
+       
+
+        <div>
+          <span>Your regex: </span><input id="regexInput"/>
+          <div id="regexOptions">
+            <input name="g" type="checkbox"/>global
+            <input name="i" type="checkbox"/>ignore case
+            <!-- <input name="y" type="checkbox"/>y -->
+            <!-- <input name="u" type="checkbox"/>u -->
+            <input name="m" type="checkbox"/>multiline
+          </div>
+          <code id="regexError"></code>
+        </div>
+        
+        <h3> Raw Log Input </h3>
+        <textarea id="rawBox" rows="4">
+        </textarea>
+
+        <h3> Scraped Output </h3>
+        <textarea id="scrapeBox"></textarea>
+        <button id="copyBtn">Copy</button>
+
+        <h3>Tree View</h3>
+        <div id="treeView">
+          
+        </div>
+        <button id="newWindow">expand in new window</button>
+
+        <script>
+          // You can also require other files to run in this process
+          require('./renderer-processes/renderer.js');
+          require('./renderer-processes/sampleLoader.js');
+        </script>
+      </section>
+      
+    </main>
+
+</body>
+</html>

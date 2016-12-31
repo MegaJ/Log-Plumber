@@ -1,0 +1,140 @@
+/* body{margin:40px */
+/* auto;max-width:650px;line-height:1.6;font-size:18px;color:#444;padding:0 */
+/* 10px}h1,h2,h3{line-height:1.2} */
+
+* {
+    box-sizing: border-box;
+}
+
+h1,h2,h3{line-height:1.2}
+
+html {
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+}
+body {
+    line-height:1.6;
+    font-size: 18px;
+    color: #444;  
+    background-color: #EEEEEE;
+    margin: 0;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    margin-left: 40px;
+    margin-bottom: 20px;
+
+    text-rendering: optimizeSpeed;
+}
+
+/* body div { */
+/*     margin: auto; */
+/* } */
+
+/* main { */
+/*     margin: 40px auto; */
+/* } */
+
+/* #scrapeBox { */
+/*     max-height: 980px; */
+/*     overflow: hidden; */
+/* } */
+
+.nav {
+    width: 340px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    color: var(--color-subtle);
+    border-right: 1px solid var(--color-border);
+    background-color: var(--color-bg);
+    visibility: hidden;
+    opacity: 0;
+}
+
+.content {
+    margin-left: 40px;
+    margin-bottom: 20px;
+    padding: 0;
+    flex: 1;
+    /* position: relative; */
+    font-size:18px;
+    color:#444;
+    padding:0;
+    overflow: scroll;
+    /* visibility: hidden; */
+    /* opacity: 0; */
+    transform: translate3d(0,0,0); /*for gpu compositing?*/
+}
+
+.section {
+    /* position: absolute;  */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* visibility:hidden; */
+    overflow-x: auto;
+    overflow-y: auto;
+    transform: translate3d(0,0,0); /*for gpu compositing?*/
+}
+
+textarea {
+    width: 90%;
+    display: block;
+    min-height: 100px;
+    margin-left: auto;
+    margin-right: auto;
+    white-space:pre;
+    overflow:scroll;
+}
+
+code {
+    display: inline-block;
+}
+
+#regexInput {
+    width: 100%;
+}
+
+ol {
+    background: rgba(50, 120, 10, .2);
+    counter-reset: depth;
+    list-style-type: none;
+}
+
+li:before {
+  counter-increment: depth;
+  content: counters(depth, ".") ". ";
+}
+
+li input + ol > li {
+    display: none;
+    margin-left: -14px !important;
+    padding-left: 1px;
+}
+
+li input:checked + ol > li {
+    display: block;
+    margin: 0 0 0.125em;
+}
+
+li > input {
+    position: absolute;
+    display: inline-block;
+    float: left;
+    left: -2em;
+    z-index: 2;
+    cursor: pointer;
+    height: 1em;
+    width: 1em;
+    top: 0;
+}
+
+li {
+    position: relative;
+}
+
+ul {
+    list-style: none;
+}
