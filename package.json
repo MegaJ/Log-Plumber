@@ -21,5 +21,7 @@
     "electron": "^1.4.1",
     "electron-context-menu": "^0.8.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "glob": "^7.1.1"
+  }
 }

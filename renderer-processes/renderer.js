@@ -19,6 +19,7 @@ const regexOptions = idIt('regexOptions');
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
 const modal = require(__dirname + "/modal/modalFront.js");
+const sounds = require('./sounds');
 
 function startUp () {
 
@@ -64,6 +65,7 @@ function startUp () {
     topRegex = new RegExp(topRegex, topRegexOpts);
     let rawText = rawBox.value; // [pb] 
     window.requestAnimationFrame(() => {
+      sounds.affirm.resetPlay();
       setImmediate(asyncFilter, evt, topRegex, rawText);
     });
   }, {passive: true});
@@ -81,7 +83,11 @@ function initializeOtherListeners () {
   let newWindowBtn = document.getElementById('newWindow');
 
   newWindowBtn.addEventListener('click', (evt) => {
-     // allow button to pop up before launching a window
+    // allow button to pop up before launching a window
+
+
+    
+    
     window.requestAnimationFrame(() => { 
       window.requestAnimationFrame(() => {
         ipcRenderer.send("open-new-window");
