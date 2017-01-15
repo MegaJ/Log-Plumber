@@ -5,6 +5,7 @@
 // TODO: position the search bar somewhere convenient
 
 const {remote: {webContents}, remote, ipcRenderer} = require('electron');
+const sounds = require("../sounds");
 
 let allWebContents = webContents.getAllWebContents();
 ipcRenderer.send("findWidget-webContents-id", webContents.id);
@@ -19,8 +20,11 @@ find widget:  { requestId: 6,
 
 window.onload = startUp;
 
+ipcRenderer.on("reset-play-sound", (evt, soundName) => {
+  sounds[soundName].resetPlay();
+})
+
 ipcRenderer.on("register-new-window", () => {
-  console.log("New window registered!");
   allWebContents = webContents.getAllWebContents();
 });
 

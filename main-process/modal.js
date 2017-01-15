@@ -8,7 +8,6 @@ function initialize (findWidgetWebContents) {
   ipcMain.on("open-new-window", showModal);
 
   function showModal(evt, arg) { // [b], synchronous operation ~150ms.
-    console.log("-----> initializing modal")
     let win = new BrowserWindow({ width: 400,
                                   height: 320,
                                   show: false});   
@@ -22,6 +21,7 @@ function initialize (findWidgetWebContents) {
     win.show();
     
     findWidgetWebContents.send("register-new-window");
+    findWidgetWebContents.send("reset-play-sound", "notification");
   }
 }
 

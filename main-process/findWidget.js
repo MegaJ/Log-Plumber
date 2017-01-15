@@ -7,7 +7,7 @@ Stick to the active window context for now.
 const path = require('path');
 const {BrowserWindow, Menu, webContents, ipcMain} = require('electron');
 const mainWindowWebContents = webContents.getAllWebContents()[0];
-
+//const sounds = require('../renderer-processes/sounds');
 //const mainWindow = require('./main');
 //console.log("main window: ", mainWindow);
 let win = new BrowserWindow({width: 220,
@@ -44,6 +44,7 @@ win.loadURL(findWidgetUrl);
 //win.openDevTools();
             
 let visible = false;
+const findWidgetWebContents = win.webContents;
 
 function toggle() {
   visible = !visible;
@@ -80,10 +81,12 @@ let killFindWidget = false;
 
   win.on("show", () => {
     visible = true;
+    findWidgetWebContents.send("reset-play-sound", "find");
   });
 
   win.on("hide", () => {
     visible = false;
+    findWidgetWebContents.send("reset-play-sound", "findHide");
   });
 })();
 

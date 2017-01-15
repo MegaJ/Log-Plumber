@@ -33,9 +33,10 @@ require('electron-context-menu')({
     requireModulesNeedingFindWidget(findWidgetWebContents);
   });
 
-  ipcMain.on("register-new-window", (event, arg) => {
-    findWidgetWebContents.send("register-new-window", event.sender.id);
-  });
+  // ipcMain.on("register-new-window", (event, arg) => {
+  //   console.log("Can findWidget see this?");
+  //   findWidgetWebContents.send("register-new-window", event.sender.id);
+  // });
 
 })();
 
