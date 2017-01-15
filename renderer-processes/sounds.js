@@ -1,8 +1,6 @@
 /**
    Since I cannot get node-wav and node-speaker to work together to get consistent sounds,
-   and the Web Audio API is nicer, I will probably want to play sounds from the renderer process.
-
-   So sounds.js may get end up getting its own hidden browser window to use ipc.
+   and the Web Audio API is nicer, I am using the renderer process to play sounds. If the main process wants to initiate a sound, it is done through findWidgetFront.js which requires this module.
 **/
 
 const glob = require('glob');
@@ -30,6 +28,9 @@ glob(path.join(__dirname, '../assets/sfx/*.wav'), (err, fileNames) => {
   soundPromiseResolution(sounds);
 });
 
+// I think I can get more performance if I base64 encode
+// the wav files so it doesn't get decoded through an XMLHTTP request
+// I might be able to use AudioContext to play files as well.
 function soundWrapper(path) {
   const audio = new Audio(path);
   // because convenience is good
