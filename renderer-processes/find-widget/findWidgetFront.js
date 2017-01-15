@@ -5,7 +5,12 @@
 // TODO: position the search bar somewhere convenient
 
 const {remote: {webContents}, remote, ipcRenderer} = require('electron');
-const sounds = require("../sounds");
+
+let sounds;
+require('../sounds').then((promisedSounds) => {
+  sounds = promisedSounds;
+});
+
 
 let allWebContents = webContents.getAllWebContents();
 ipcRenderer.send("findWidget-webContents-id", webContents.id);
@@ -22,7 +27,7 @@ window.onload = startUp;
 
 ipcRenderer.on("reset-play-sound", (evt, soundName) => {
   sounds[soundName].resetPlay();
-})
+});
 
 ipcRenderer.on("register-new-window", () => {
   allWebContents = webContents.getAllWebContents();

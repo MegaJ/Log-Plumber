@@ -19,7 +19,10 @@ const regexOptions = idIt('regexOptions');
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
 const modal = require(__dirname + "/modal/modalFront.js");
-const sounds = require('./sounds');
+let sounds;
+require('./sounds').then((promisedSounds) => {
+  sounds = promisedSounds;
+});
 
 function startUp () {
 
@@ -65,6 +68,7 @@ function startUp () {
     topRegex = new RegExp(topRegex, topRegexOpts);
     let rawText = rawBox.value; // [pb] 
     window.requestAnimationFrame(() => {
+      // sounds are promises, but this guard looks like a hack
       sounds.affirm.resetPlay();
       setImmediate(asyncFilter, evt, topRegex, rawText);
     });
