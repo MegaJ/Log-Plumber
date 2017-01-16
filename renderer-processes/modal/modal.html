@@ -1,10 +1,21 @@
+<!-- <link rel="stylesheet" href="../../assets/styles.css"> -->
 <style>
 body {
-  font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+  font-family: 'Open Sans Condensed';
   color: #fff;
   background-color: #8aba87;
   text-align: center;
   font-size: 40px;
+}
+
+/* latin */
+@font-face {
+  font-family: 'Open Sans Condensed';
+  font-style: normal;           /*light*/
+  font-weight: 300;
+src: local('Open Sans Cond Light'), local('OpenSans-CondensedLight'),
+url('../../assets/fonts/OpenSansCondensedLight.woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
 h2 {
@@ -30,4 +41,4 @@ h2 {
 </style>
 
 <h2>Hello World!</h2>
-<a id="close" href="javascript:window.close()">Close this Window</a>
+<a id="close" href="javascript:window.close()">Close this Window <script>document.write(process.cwd())</script></a>

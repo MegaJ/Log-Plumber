@@ -5,7 +5,6 @@
 
 const glob = require('glob');
 const path = require('path');
-const {ipcRenderer} = require('electron');
 
 const sounds = {};
 let soundPromiseResolution;
@@ -35,6 +34,8 @@ function soundWrapper(path) {
   const audio = new Audio(path);
   // because convenience is good
   audio.resetPlay = () => {
+    // This line costs the most when playing sounds
+    // Costs a lot more when done through ipc: ~23ms, though the ipc is 1ms
     audio.currentTime = 0;
     audio.play();
   }

@@ -66,10 +66,10 @@ function startUp () {
     let option = changedCheckbox.name;
     topRegexOpts = changedCheckbox.checked ? topRegexOpts + option : topRegexOpts.replace(option, '');
     topRegex = new RegExp(topRegex, topRegexOpts);
-    let rawText = rawBox.value; // [pb] 
-    window.requestAnimationFrame(() => {
-      // sounds are promises, but this guard looks like a hack
-      sounds.affirm.resetPlay();
+    let rawText = rawBox.value; // [pb]
+
+    sounds.affirm.resetPlay();
+    window.requestAnimationFrame(() => {    
       setImmediate(asyncFilter, evt, topRegex, rawText);
     });
   }, {passive: true});
