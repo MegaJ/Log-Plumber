@@ -6,7 +6,6 @@
     <title>Log Plumber</title>
   </head>
   <body>
-    
     <nav>
       <header>
         <h1 class="slant">
@@ -17,7 +16,7 @@
         <h5>
           Logs to Trees
         </h5>
-        <button>Turn flat logs to <em>hierarchical logs</em>
+        <button id="show-section.scrape">Turn flat logs to <em>hierarchical logs</em>
         </button>
       </div>
 
@@ -25,7 +24,7 @@
         <h5>
           Misc tasks
         </h5>
-        <button>Modify and run<em>custom scripts</em>
+        <button id="show-section.tasks">Modify and run<em>custom scripts</em>
         </button>
       </div>
 
@@ -33,7 +32,7 @@
         <h5>
           SFX
         </h5>
-        <button> Sound and Visuals<em>!</em>
+        <button id="show-section.sfx"> Sound and Visuals<em>!</em>
         </button>
       </div>
       
@@ -43,11 +42,8 @@
     </nav>
 
     <main class="content">
-      <section class="section">
-        <header>Maintenance Life</header>
-        
-       
-
+      <section id="section.scrape" class="section">
+        <header>The Plumber's Ledger</header>
         <div>
           <span>Your regex: </span><input id="regexInput"/>
           <div id="regexOptions">
@@ -80,8 +76,29 @@
           require('./renderer-processes/sampleLoader.js');
         </script>
       </section>
+
+      <section id="section.tasks" class="section">
+        This is the section for custom scripts
+        <h3>Custom Script</h3>
+        <textarea>
+        </textarea>
+        <script>
+          
+          
+        </script>
+      </section>
+
+      <section id="section.sfx" class="section">
+        SFX
+        <script>
+          
+          
+        </script>
+      </section>
       
     </main>
-
+    <script>
+      require('./renderer-processes/nav');
+    </script>
 </body>
 </html>
