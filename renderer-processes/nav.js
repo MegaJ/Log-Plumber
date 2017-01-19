@@ -4,28 +4,25 @@ var currentlyVisible = currentlyVisible || document.getElementById("section.scra
 const visibilityMarker = "is-shown";
 
 // perform delegation to buttons, instead of adding an event listener on each button
-//const sectionIds = document.querySelectorAll("section");
-const sectionButtonRegex = /show-section/;
-const buttonIdToSectionIdRegex = /show-/;
+const sectionButtonRegex = /show-(section\..*)/;
 const nav = document.querySelector("nav");
 nav.addEventListener('click', (evt) => {
   let currentElement = evt.target;
-
-  while(currentElement && currentElement.tagName !== "BUTTON" && currentElement.type !== "NAV") {
+  
+  while(currentElement.tagName !== "BUTTON" && currentElement.tagName !== "NAV") {
     currentElement = currentElement.parentElement;
   }
 
-  if (currentElement && currentElement.type === "nav") return;
+  if (currentElement.type === "nav") return;
   
   let targetId = currentElement.id;
   if (targetId) {
-    let sectionId = targetId.match(sectionButtonRegex);
-    if (sectionId) {
-      transition(currentlyVisible, document.getElementById(targetId.replace(buttonIdToSectionIdRegex, "")));
+    let sectionMatch = targetId.match(sectionButtonRegex);
+    let sectionId = sectionMatch[1];
+    if (sectionMatch && sectionId) {
+      transition(currentlyVisible, document.getElementById(sectionId));
     }
-  } // else {
-  //   throw new Error("Invalid UI, button must have an id.");
-  // }
+  }
 }, {capture: true, passive: true});
 
 const transition = (from, to) => {
