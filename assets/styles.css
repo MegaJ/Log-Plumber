@@ -153,12 +153,34 @@ textarea {
     overflow: scroll;
 }
 
+.regexOption {
+    display: none;
+}
+
+.regexOption + label {
+    cursor: pointer;
+    color: grey;
+}
+
+.regexOption:checked + label.g {
+    color: red;
+}
+
+.regexOption:checked + label.i {
+    color: yellow;
+}
+
+.regexOption:checked + label.m {
+    color: green;
+}
+
 code {
     display: inline-block;
 }
 
-#regexInput {
-    width: 100%;
+.regexInput {
+    width: auto;
+    display: inline;
 }
 
 #treeView {

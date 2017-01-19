@@ -14,7 +14,6 @@ if (!currentlyVisible) {
   transition(scrapeSection, scrapeSection);
 }
 
-
 const visibilityMarker = "is-shown";
 
 // perform delegation to buttons, instead of adding an event listener on each button
@@ -38,3 +37,10 @@ nav.addEventListener('click', (evt) => {
     }
   }
 }, {capture: true, passive: true});
+
+// I could add an accelerator for displaying nav actually...
+const main = document.getElementsByTagName("main")[0];
+nav.addEventListener('click', (evt) => {
+  main.style.marginLeft = "0%";
+  nav.style.display = "none";
+});
