@@ -1,5 +1,19 @@
 // need to have memory of this after closing app, might do a load procedure
-var currentlyVisible = currentlyVisible || document.getElementById("section.scrape");
+var currentlyVisible // = loadFromStorage();
+
+const transition = (from, to) => {
+  currentlyVisible = to;
+  requestAnimationFrame(() => {
+    from.classList.remove(visibilityMarker);
+    to.classList.add(visibilityMarker);
+  })
+};
+
+if (!currentlyVisible) {
+  let scrapeSection = document.getElementById("section.scrape");
+  transition(scrapeSection, scrapeSection);
+}
+
 
 const visibilityMarker = "is-shown";
 
@@ -24,11 +38,3 @@ nav.addEventListener('click', (evt) => {
     }
   }
 }, {capture: true, passive: true});
-
-const transition = (from, to) => {
-  currentlyVisible = to;
-  requestAnimationFrame(() => {
-    from.classList.remove(visibilityMarker);
-    to.classList.add(visibilityMarker);
-  })
-};
