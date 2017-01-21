@@ -34,8 +34,10 @@ function startUp () {
   // regexps, regexOpts are not DOM elements, they are filled from their DOM
   // conuterparts: regexInputsArray and regexOptionsArray respectively
   // TODO: implement loading from stored json later
-  let regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (DEBUG|INFO)))+/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
+  let regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
   let regexOpts = ['', '', ''];
+
+  // Initialize the error displays
   let regexErrorsDisplayArray = [];
   regexErrorsArray.forEach((regexError, i) => {
     let initialTextNode = document.createTextNode('');
@@ -77,6 +79,7 @@ function startUp () {
       try {
         let newRegex = new RegExp(newRegexString, regexOpts[numSuffix]);
         
+        
         // Clear the previously displayed error if regex creation was successful
         regexErrorDisplay.nodeValue = ``;
         console.log("new regex: ", regex);
@@ -87,6 +90,7 @@ function startUp () {
 
       // Filter the scraped output.
       window.requestAnimationFrame(() => {
+        // hard code to start from the top
         setImmediate(asyncFilter, evt, newRegex, rawBox.value);
       })
     }
@@ -103,7 +107,8 @@ function startUp () {
       let newRegex = new RegExp(regexps[numSuffix], regexOpts[numSuffix]);
       
       sounds.affirm.resetPlay();
-      window.requestAnimationFrame(() => {    
+      window.requestAnimationFrame(() => {
+        // hard code to start from the top
         setImmediate(asyncFilter, evt, newRegex, rawBox.value);
       });
     }
@@ -131,7 +136,7 @@ function startUp () {
   //   })
   // }, {passive: true});
 
-  regexOptionsArray[0].addEventListener('change', (evt) => {
+  // regexOptionsArray[0].addEventListener('change', (evt) => {
     // let changedCheckbox = evt.target;
     // let option = changedCheckbox.name;
     // regexOpts[0] = changedCheckbox.checked ? regexOpts[0] + option : regexOpts[0].replace(option, '');
@@ -142,7 +147,7 @@ function startUp () {
     // window.requestAnimationFrame(() => {    
     //   setImmediate(asyncFilter, evt, regex0, rawText);
     // });
-  }, {passive: true});
+  // }, {passive: true});
 
   copyBtn.addEventListener('click', (evt) => {
     let scrapedText = scrapeBox.value;
@@ -239,9 +244,9 @@ function makeTreeView() {
     return treeView;
   }
 
-  function flushAttach(DOMTarget) {
+  function flushAttach(DOMTargetParent, DOMTarget) {
     window.requestAnimationFrame(() => {
-      DOMTarget.appendChild(fragment);
+      DOMTargetParent.replaceChild(fragment, DOMTarget);
     });
   }
 
@@ -297,9 +302,7 @@ function asyncFilter(evt, regex, text) {
 
       window.requestAnimationFrame(() => {
         scrapeBox.value = matchedString;
-        DOMTargetParent.replaceChild(treeView.fragment, DOMTarget);
-//        removeAllChildren(DOMTarget);
-//        DOMTarget.appendChild(treeView.treeRoot);
+        treeView.flushAttach(DOMTargetParent, DOMTarget);
       });
 
       return;
@@ -346,18 +349,16 @@ function asyncFilter(evt, regex, text) {
 
     // to give impression of responsiveness, render a small portion
     if(renderFirstBatch) {
-      //scrapeBox.value = tempAcc;
+      scrapeBox.value = orgModeView.orgText;
       //scrapeBox.value = orgModeView.orgText;
-      tempAcc = '';
+//      tempAcc = '';
       renderFirstBatch = false;
     }
 
     if (doneFlag) {
       //      scrapeBox.value += tempAcc;
       scrapeBox.value = orgModeView.orgText;
-      //      removeAllChildren(DOMTarget);
-      //     treeView.flushAttach(DOMTarget);
-      DOMTargetParent.replaceChild(treeView.fragment, DOMTarget);
+      treeView.flushAttach(DOMTargetParent, DOMTarget);
       return;
     }
     window.requestAnimationFrame(scrapeBoxFiller);

@@ -208,9 +208,15 @@ textarea {
 }
 
 /* make this a class so naming is clear */
-div.regexInput {
-    font-size: 16px;
-    font-family: "DejaVu Sans Mono Bold";
+
+.dejaVu {
+        font-size: 16px;
+        font-family: "DejaVu Sans Mono Bold";
+}
+
+.removeRegex {
+    font-size: 13px;
+    font-style: bold;
 }
 
 #treeView {
