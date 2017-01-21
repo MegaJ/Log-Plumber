@@ -17,6 +17,7 @@ const copyBtn = document.getElementById('copyBtn');
 const regexInputsArray = document.querySelectorAll('input[id^=regexInput]');
 const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]');
 const regexErrorsArray = document.querySelectorAll('code[id^=regexError]');
+const delegator = document.querySelector('#section\\.scrape div.delegator');
 
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
@@ -30,53 +31,117 @@ function startUp () {
 
   rawBox.wrap = scrapeBox.wrap ="off"; // unnecessary?
 
-  // implement loading from stored json
-  regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (DEBUG|INFO)))+/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
-
-  let regex0Opts = '';
-  let initialTextNode = document.createTextNode('');
-  regexErrorsArray.forEach(regexError => {
+  // regexps, regexOpts are not DOM elements, they are filled from their DOM
+  // conuterparts: regexInputsArray and regexOptionsArray respectively
+  // TODO: implement loading from stored json later
+  let regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (DEBUG|INFO)))+/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
+  let regexOpts = ['', '', ''];
+  let regexErrorsDisplayArray = [];
+  regexErrorsArray.forEach((regexError, i) => {
+    let initialTextNode = document.createTextNode('');
     regexError.appendChild(initialTextNode);
-    regexErrorDisplay = regexError.childNodes[0];
+    regexErrorsDisplayArray[i] = regexError.childNodes[0];
   });
-  
-  for(let i = 0; i < regexps.length; i++) {
-    regexInputsArray[i].value = regexps[i].toString().slice(1, this.length - 1);
-  }
 
-//  let rawText = rawBox.value; // [pb] synchronous operation, slow
+  // Fill in regexeps to display to user.
+  regexps.forEach((regex, i) => {
+    regexInputsArray[i].value = regexps[i].toString().slice(1, -1);
+  });
+
   rawBox.addEventListener('input', (evt) => window.requestAnimationFrame(() => {
     setImmediate(asyncFilter, evt, regex0, rawBox.value);
   }, {passive: true}));
-  
-  regexInput.addEventListener('input', (evt) => {
-    let newRegexString = regexInput.value;
-    try {
-      let newTopRegex = new RegExp(newRegexString, regex0Opts);
-      regex0 = newTopRegex;
-      regexErrorDisplay.nodeValue = ``;
-      console.log("new regex0: ", regex0);
-    } catch(e) {
-      regexErrorDisplay.nodeValue = `Error: ${e}`;
+
+  function delegationMakerHelper(listenerCallback) {
+    return function (evt) {
+      let currentElement = evt.target;
+      while(currentElement.tagName !== "INPUT" && currentElement.classList[0] !== "delegator") {
+        currentElement = currentElement.parentElement;
+      }
+
+      if (currentElement.classList.contains("delegator")) return;
+
+      listenerCallback(evt, currentElement);
     }
+  }
+  
+  function inputListenerCallback (evt, inputElement) {
+    let regexInputIdRegexp = /regexInput([0-9]*)/;
+    let match = currentElement.id.match(regexInputIdRegexp);
+    if (match) {
+      // TODO: stop asyncFilter with some sort of flag here
+      let numSuffix = match[1];
+      let newRegexString = regexInputsArray[numSuffix].value;
 
-    // let rawText = rawBox.value;  
-    window.requestAnimationFrame(() => {
-      setImmediate(asyncFilter, evt, regex0, rawBox.value);
-    })
-  }, {passive: true});
+      // Attempt to use the regex, which may be invalid
+      try {
+        let newRegex = new RegExp(newRegexString, regexOpts[numSuffix]);
+        
+        // Clear the previously displayed error if regex creation was successful
+        regexErrorDisplay.nodeValue = ``;
+        console.log("new regex: ", regex);
+      } catch(e) {
+        regexErrorsDisplayArray[numSuffix].nodeValue = `Error: ${e}`;
+        return;
+      }
 
-  regexOptions.addEventListener('change', (evt) => {
-    let changedCheckbox = evt.target;
-    let option = changedCheckbox.name;
-    regex0Opts = changedCheckbox.checked ? regex0Opts + option : regex0Opts.replace(option, '');
-    regex0 = new RegExp(regex0, regex0Opts);
-    let rawText = rawBox.value; // [pb]
+      // Filter the scraped output.
+      window.requestAnimationFrame(() => {
+        setImmediate(asyncFilter, evt, newRegex, rawBox.value);
+      })
+    }
+  }
 
-    sounds.affirm.resetPlay();
-    window.requestAnimationFrame(() => {    
-      setImmediate(asyncFilter, evt, regex0, rawText);
-    });
+  function changeListenerCallback (evt, inputElement) {
+    let regexOptionIdRegexp = /[gim]([0-9]*)/;
+    let match = inputElement.id.match(regexOptionIdRegexp)
+    if (match) {
+      let changedCheckbox = inputElement;
+      let numSuffix = match[1];
+      let option = changedCheckbox.name;
+      regexOpts[numSuffix] = changedCheckbox.checked ? regexOpts[numSuffix] + option : regexOpts[numSuffix].replace(option, '');
+      let newRegex = new RegExp(regexps[numSuffix], regexOpts[numSuffix]);
+      
+      sounds.affirm.resetPlay();
+      window.requestAnimationFrame(() => {    
+        setImmediate(asyncFilter, evt, newRegex, rawBox.value);
+      });
+    }
+  }
+  delegator.addEventListener('input', delegationMakerHelper(inputListenerCallback), {capture: true, passive: true});
+  delegator.addEventListener('change', delegationMakerHelper(changeListenerCallback), {capture: true, passive: true});
+  
+  
+  // regexInputsArray[0].addEventListener('input', (evt) => {
+  //   let newRegexString = regexInputsArray[0].value;
+
+  //   // Attempt to use the regex, which may be invalid
+  //   try {
+  //     let newTopRegex = new RegExp(newRegexString, regex0Opts);
+  //     regex0 = newTopRegex;
+  //     // Clear the previously displayed error if regex creation was successful
+  //     regexErrorDisplay.nodeValue = ``;
+  //     console.log("new regex0: ", regex0);
+  //   } catch(e) {
+  //     regexErrorDisplay.nodeValue = `Error: ${e}`;
+  //   }
+
+  //   window.requestAnimationFrame(() => {
+  //     setImmediate(asyncFilter, evt, regex0, rawBox.value);
+  //   })
+  // }, {passive: true});
+
+  regexOptionsArray[0].addEventListener('change', (evt) => {
+    // let changedCheckbox = evt.target;
+    // let option = changedCheckbox.name;
+    // regexOpts[0] = changedCheckbox.checked ? regexOpts[0] + option : regexOpts[0].replace(option, '');
+    // regex0 = new RegExp(regexps[0], regexOpts[0]);
+    // let rawText = rawBox.value; // [pb]
+
+    // sounds.affirm.resetPlay();
+    // window.requestAnimationFrame(() => {    
+    //   setImmediate(asyncFilter, evt, regex0, rawText);
+    // });
   }, {passive: true});
 
   copyBtn.addEventListener('click', (evt) => {
@@ -92,10 +157,6 @@ function initializeOtherListeners () {
 
   newWindowBtn.addEventListener('click', (evt) => {
     // allow button to pop up before launching a window
-
-
-    
-    
     window.requestAnimationFrame(() => { 
       window.requestAnimationFrame(() => {
         ipcRenderer.send("open-new-window");
@@ -132,6 +193,7 @@ function makeTreeView() {
   
   const fragment = document.createDocumentFragment();
   let treeRoot = document.createElement("div");
+  treeRoot.id = "treeRoot";
   // let treeRootCheckbox = document.createElement("input");
   // treeRootCheckbox.type = "checkbox";
   let treeRootOL = document.createElement("ul");
@@ -144,6 +206,7 @@ function makeTreeView() {
   let rightmostPath = [treeRootLI];
   
   const treeView = {
+    fragment: fragment,
     treeRoot: treeRoot,
     appendChild: appendChild,
     flushAttach: flushAttach
@@ -187,7 +250,7 @@ function makeTreeView() {
 
 function removeAllChildren(DOMTarget) {
   while (DOMTarget.lastChild) {
-    DOMTarget.removeChild(DOMTarget.firstChild);
+    DOMTarget.removeChild(DOMTarget.lastChild);
   }
 }
 
@@ -211,7 +274,8 @@ function asyncFilter(evt, regex, text) {
 
   let treeView = makeTreeView();
   let orgModeView = makeOrgModeView();
-  const DOMTarget = document.getElementById("treeView");
+  const DOMTargetParent = document.getElementById("treeView");
+  const DOMTarget = DOMTargetParent.firstElementChild;
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
     let matches = [];
@@ -233,8 +297,9 @@ function asyncFilter(evt, regex, text) {
 
       window.requestAnimationFrame(() => {
         scrapeBox.value = matchedString;
-        removeAllChildren(DOMTarget);
-        DOMTarget.appendChild(treeView.treeRoot);
+        DOMTargetParent.replaceChild(treeView.fragment, DOMTarget);
+//        removeAllChildren(DOMTarget);
+//        DOMTarget.appendChild(treeView.treeRoot);
       });
 
       return;
@@ -290,8 +355,9 @@ function asyncFilter(evt, regex, text) {
     if (doneFlag) {
       //      scrapeBox.value += tempAcc;
       scrapeBox.value = orgModeView.orgText;
-      removeAllChildren(DOMTarget);
-      treeView.flushAttach(DOMTarget);
+      //      removeAllChildren(DOMTarget);
+      //     treeView.flushAttach(DOMTarget);
+      DOMTargetParent.replaceChild(treeView.fragment, DOMTarget);
       return;
     }
     window.requestAnimationFrame(scrapeBoxFiller);

@@ -30,6 +30,7 @@ glob(path.join(__dirname, '../assets/sfx/*.wav'), (err, fileNames) => {
 // I think I can get more performance if I base64 encode
 // the wav files so it doesn't get decoded through an XMLHTTP request
 // I might be able to use AudioContext to play files as well.
+// Can also make resetPlay a prototype method
 function soundWrapper(path) {
   const audio = new Audio(path);
   // because convenience is good

@@ -41,8 +41,9 @@
     </nav>
 
     <main class="content">
-      <section id="section.scrape">
+      <section id="section.scrape" class="section">
         <header>The Plumber's Ledger</header>
+        <div class="delegator">
         <div class="flex-container">
           <div id="regexOptions0" class="flex-containee-small regexInput">
             <span class="linker">L</span>
@@ -51,9 +52,8 @@
             <input id="m0" name="m" type="checkbox" class="regexOption"/><label for="m0" class="m">◉</label>
            </div>
           <input id="regexInput0" class="regexInput flex-containee-large left-margin"/>
-         
-          <code id="regexError0"></code>
         </div>
+        <code id="regexError0"></code>
         <div class="flex-container">
           <div id="regexOptions1" class="flex-containee-small regexInput">
             <span class="linker">L</span>
@@ -62,8 +62,8 @@
             <input id="m1" name="m" type="checkbox" class="regexOption"/><label for="m1" class="m">◉</label>
             </div>
           <input id="regexInput1" class="regexInput flex-containee-large left-margin"/>
-          <code id="regexError1"></code>
         </div>
+        <code id="regexError1"></code>
         <div class="flex-container"> 
          <div id="regexOptions2" class="regexInput">
             <span class="linker">L</span>
@@ -72,9 +72,9 @@
             <input id="m2" name="m" type="checkbox" class="regexOption"/><label for="m2" class="m">◉</label>
             </div>
           <input id="regexInput2"  class="regexInput flex-containee-large left-margin"/>
-          <code id="regexError2"></code>
         </div>
-
+        <code id="regexError2"></code>
+        </div>
         <button id="newRegex">✚</button>
         
         <h3> Raw Log Input </h3>
@@ -86,7 +86,8 @@
 
         <h3>Tree View</h3>
         <div id="treeView">
-          
+          <div id="treeRoot">
+          </div>
         </div>
         <button id="newWindow">expand in new window</button>
 

@@ -120,7 +120,7 @@ body {
     font-size:18px;
     color: #e6ffff;
     padding:0;
-    overflow: scroll;
+    /* overflow: scroll; */
     transform: translate3d(0,0,0); /*for gpu compositing?*/
 }
 
@@ -137,8 +137,8 @@ body {
     right: 0;
     bottom: 0;
     visibility:hidden;
-    overflow-x: auto;
-    overflow-y: auto;
+    overflow-x: scroll;
+    overflow-y: scroll;
     transform: translate3d(0,0,0); /*for gpu compositing?*/
     pointer-events: none;
 }
@@ -181,9 +181,9 @@ textarea {
     background: #ccff00
 }
 
-code {
-    display: inline-block;
-}
+/* code { */
+/*     display: inline-block; */
+/* } */
 
 .flex-container {
     width: 100%;
