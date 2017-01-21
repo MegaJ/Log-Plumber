@@ -185,8 +185,25 @@ code {
     display: inline-block;
 }
 
+.flex-container {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+}
+
+.flex-containee-small {
+}
+
+.flex-containee-large {
+    flex: 2;
+    width: 100%
+}
+
+.left-margin {
+    margin-left: 0.5em;
+}
+
 .regexInput {
-    width: auto;
     display: inline;
 }
 
@@ -194,7 +211,6 @@ code {
 div.regexInput {
     font-size: 16px;
     font-family: "DejaVu Sans Mono Bold";
-    
 }
 
 #treeView {

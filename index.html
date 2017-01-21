@@ -43,39 +43,35 @@
     <main class="content">
       <section id="section.scrape">
         <header>The Plumber's Ledger</header>
-        <div>
-          I want the angle brackets to light up when g i or m is selected, and we can do away with check boxes and have tool tips instead.
-          <span>Level 0: ❯❯❯</span><input id="regexInput0" class="regexInput"/>
-          <div id="regexOptions0">
-            
-            <input name="g" type="checkbox" class="regexOption"/>global
-            <input name="i" type="checkbox" class="regexOption"/>ignore case
-            <!-- <input name="y" type="checkbox"/>y -->
-            <!-- <input name="u" type="checkbox"/>u -->
-            <input name="m" type="checkbox" class="regexOption"/>multiline
-          </div>
+        <div class="flex-container">
+          <div id="regexOptions0" class="flex-containee-small regexInput">
+            <span class="linker">L</span>
+            <input id="g0" name="g" type="checkbox" class="regexOption"/><label for="g0" class="g">◉</label>
+            <input id="i0" name="i" type="checkbox" class="regexOption"/><label for="i0" class="i">◉</label>
+            <input id="m0" name="m" type="checkbox" class="regexOption"/><label for="m0" class="m">◉</label>
+           </div>
+          <input id="regexInput0" class="regexInput flex-containee-large left-margin"/>
+         
           <code id="regexError0"></code>
         </div>
-        <div>
-          <div id="regexOptions1" class="regexInput">
+        <div class="flex-container">
+          <div id="regexOptions1" class="flex-containee-small regexInput">
             <span class="linker">L</span>
             <input id="g1" name="g" type="checkbox" class="regexOption"/><label for="g1" class="g">◉</label>
             <input id="i1" name="i" type="checkbox" class="regexOption"/><label for="i1" class="i">◉</label>
             <input id="m1" name="m" type="checkbox" class="regexOption"/><label for="m1" class="m">◉</label>
             </div>
-          <input id="regexInput1"class="regexInput"/>
-         
+          <input id="regexInput1" class="regexInput flex-containee-large left-margin"/>
           <code id="regexError1"></code>
         </div>
-        <div> 
-          <span>Level 2: ❯❯❯</span><input id="regexInput1"class="regexInput"/>
-          <div id="regexOptions2">
-            <input name="g" type="checkbox"/>global
-            <input name="i" type="checkbox"/>ignore case
-            <!-- <input name="y" type="checkbox"/>y -->
-            <!-- <input name="u" type="checkbox"/>u -->
-            <input name="m" type="checkbox"/>multiline
-          </div>
+        <div class="flex-container"> 
+         <div id="regexOptions2" class="regexInput">
+            <span class="linker">L</span>
+            <input id="g2" name="g" type="checkbox" class="regexOption"/><label for="g2" class="g">◉</label>
+            <input id="i2" name="i" type="checkbox" class="regexOption"/><label for="i2" class="i">◉</label>
+            <input id="m2" name="m" type="checkbox" class="regexOption"/><label for="m2" class="m">◉</label>
+            </div>
+          <input id="regexInput2"  class="regexInput flex-containee-large left-margin"/>
           <code id="regexError2"></code>
         </div>
         
