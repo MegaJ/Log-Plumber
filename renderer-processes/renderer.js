@@ -7,14 +7,16 @@ const {clipboard, ipcRenderer, remote: {Menu}} = require('electron');
 
 window.onload = startUp;
 
-const copyBtn = document.getElementById('copyBtn');
+
 const idIt = document.getElementById.bind(document);
 const rAF = window.requestAnimationFrame;
 
-const regexInput = idIt('regexInput');
 const rawBox = idIt('rawBox');
 const scrapeBox = idIt('scrapeBox');
-const regexOptions = idIt('regexOptions');
+const copyBtn = document.getElementById('copyBtn');
+const regexInputsArray = document.querySelectorAll('input[id^=regexInput]');
+const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]');
+const regexErrorsArray = document.querySelectorAll('code[id^=regexError]');
 
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
@@ -28,53 +30,55 @@ function startUp () {
 
   rawBox.wrap = scrapeBox.wrap ="off"; // unnecessary?
 
-  let topRegex = /([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (DEBUG|INFO)))+/; // giyum options set by checkboxes
-  let topRegexOpts = '';
-  let initialTextNode = document.createTextNode('');
-  idIt('regexError').appendChild(initialTextNode);
-  regexErrorDisplay = idIt('regexError').childNodes[0];
-  
-  regexInput.value = topRegex.toString().slice(1, this.length - 1);
+  // implement loading from stored json
+  regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (DEBUG|INFO)))+/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
 
-  // control flow is a little complicated if I have to wait until the sample is loaded
-  //asyncFilter(null, topRegex);
+  let regex0Opts = '';
+  let initialTextNode = document.createTextNode('');
+  regexErrorsArray.forEach(regexError => {
+    regexError.appendChild(initialTextNode);
+    regexErrorDisplay = regexError.childNodes[0];
+  });
+  
+  for(let i = 0; i < regexps.length; i++) {
+    regexInputsArray[i].value = regexps[i].toString().slice(1, this.length - 1);
+  }
 
 //  let rawText = rawBox.value; // [pb] synchronous operation, slow
   rawBox.addEventListener('input', (evt) => window.requestAnimationFrame(() => {
-    setImmediate(asyncFilter, evt, topRegex, rawBox.value);
+    setImmediate(asyncFilter, evt, regex0, rawBox.value);
   }, {passive: true}));
   
   regexInput.addEventListener('input', (evt) => {
     let newRegexString = regexInput.value;
     try {
-      let newTopRegex = new RegExp(newRegexString, topRegexOpts);
-      topRegex = newTopRegex;
+      let newTopRegex = new RegExp(newRegexString, regex0Opts);
+      regex0 = newTopRegex;
       regexErrorDisplay.nodeValue = ``;
-      console.log("new topRegex: ", topRegex);
+      console.log("new regex0: ", regex0);
     } catch(e) {
       regexErrorDisplay.nodeValue = `Error: ${e}`;
     }
 
     // let rawText = rawBox.value;  
     window.requestAnimationFrame(() => {
-      setImmediate(asyncFilter, evt, topRegex, rawBox.value);
+      setImmediate(asyncFilter, evt, regex0, rawBox.value);
     })
   }, {passive: true});
 
   regexOptions.addEventListener('change', (evt) => {
     let changedCheckbox = evt.target;
     let option = changedCheckbox.name;
-    topRegexOpts = changedCheckbox.checked ? topRegexOpts + option : topRegexOpts.replace(option, '');
-    topRegex = new RegExp(topRegex, topRegexOpts);
+    regex0Opts = changedCheckbox.checked ? regex0Opts + option : regex0Opts.replace(option, '');
+    regex0 = new RegExp(regex0, regex0Opts);
     let rawText = rawBox.value; // [pb]
 
     sounds.affirm.resetPlay();
     window.requestAnimationFrame(() => {    
-      setImmediate(asyncFilter, evt, topRegex, rawText);
+      setImmediate(asyncFilter, evt, regex0, rawText);
     });
   }, {passive: true});
 
-  // orthogonal
   copyBtn.addEventListener('click', (evt) => {
     let scrapedText = scrapeBox.value;
     clipboard.writeText(scrapedText);// [pb]
