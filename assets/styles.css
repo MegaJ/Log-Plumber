@@ -157,6 +157,10 @@ textarea {
     display: none;
 }
 
+.linker {
+    -webkit-user-select: auto;
+}
+
 .regexOption + label {
     cursor: pointer;
     color: grey;
