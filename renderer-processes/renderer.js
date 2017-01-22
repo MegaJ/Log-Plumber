@@ -34,8 +34,8 @@ function startUp () {
   // regexps, regexOpts are not DOM elements, they are filled from their DOM
   // conuterparts: regexInputsArray and regexOptionsArray respectively
   // TODO: implement loading from stored json later
-  let regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
-  let regexOpts = ['', '', ''];
+  let regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, /\((.*)\) *[:|-]/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
+  let regexOpts = ['', '', '', ''];
 
   // Initialize the error displays
   let regexErrorsDisplayArray = [];
@@ -69,7 +69,7 @@ function startUp () {
   
   function inputListenerCallback (evt, inputElement) {
     let regexInputIdRegexp = /regexInput([0-9]*)/;
-    let match = currentElement.id.match(regexInputIdRegexp);
+    let match = inputElement.id.match(regexInputIdRegexp);
     if (match) {
       // TODO: stop asyncFilter with some sort of flag here
       let numSuffix = match[1];
@@ -79,11 +79,12 @@ function startUp () {
       try {
         let newRegex = new RegExp(newRegexString, regexOpts[numSuffix]);
         
-        
         // Clear the previously displayed error if regex creation was successful
-        regexErrorDisplay.nodeValue = ``;
-        console.log("new regex: ", regex);
+        regexErrorsDisplayArray[numSuffix].nodeValue = ``;
+        console.log("new regex: ", newRegex);
+        // Need a sound to play when they previously had an error and cleared it.
       } catch(e) {
+        sounds.error.resetPlay();
         regexErrorsDisplayArray[numSuffix].nodeValue = `Error: ${e}`;
         return;
       }
@@ -115,39 +116,6 @@ function startUp () {
   }
   delegator.addEventListener('input', delegationMakerHelper(inputListenerCallback), {capture: true, passive: true});
   delegator.addEventListener('change', delegationMakerHelper(changeListenerCallback), {capture: true, passive: true});
-  
-  
-  // regexInputsArray[0].addEventListener('input', (evt) => {
-  //   let newRegexString = regexInputsArray[0].value;
-
-  //   // Attempt to use the regex, which may be invalid
-  //   try {
-  //     let newTopRegex = new RegExp(newRegexString, regex0Opts);
-  //     regex0 = newTopRegex;
-  //     // Clear the previously displayed error if regex creation was successful
-  //     regexErrorDisplay.nodeValue = ``;
-  //     console.log("new regex0: ", regex0);
-  //   } catch(e) {
-  //     regexErrorDisplay.nodeValue = `Error: ${e}`;
-  //   }
-
-  //   window.requestAnimationFrame(() => {
-  //     setImmediate(asyncFilter, evt, regex0, rawBox.value);
-  //   })
-  // }, {passive: true});
-
-  // regexOptionsArray[0].addEventListener('change', (evt) => {
-    // let changedCheckbox = evt.target;
-    // let option = changedCheckbox.name;
-    // regexOpts[0] = changedCheckbox.checked ? regexOpts[0] + option : regexOpts[0].replace(option, '');
-    // regex0 = new RegExp(regexps[0], regexOpts[0]);
-    // let rawText = rawBox.value; // [pb]
-
-    // sounds.affirm.resetPlay();
-    // window.requestAnimationFrame(() => {    
-    //   setImmediate(asyncFilter, evt, regex0, rawText);
-    // });
-  // }, {passive: true});
 
   copyBtn.addEventListener('click', (evt) => {
     let scrapedText = scrapeBox.value;
@@ -253,12 +221,6 @@ function makeTreeView() {
   return treeView;
 }
 
-function removeAllChildren(DOMTarget) {
-  while (DOMTarget.lastChild) {
-    DOMTarget.removeChild(DOMTarget.lastChild);
-  }
-}
-
 
 /**
    Could make this function a separate module
@@ -273,6 +235,7 @@ function asyncFilter(evt, regex, text) {
   let doneFlag = false;
   let tempAcc = '';
 
+  
   let hitRegex = / HIT: ([\s\S]*)/; //obtain first capture group
   let sqlRegex = /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/; // obtain 0th capture group
   let classNameAndLineNumRegex = /\((.*)\) *[:|-]/;
