@@ -34,7 +34,7 @@ function startUp () {
   // regexps, regexOpts are not DOM elements, they are filled from their DOM
   // conuterparts: regexInputsArray and regexOptionsArray respectively
   // TODO: implement loading from stored json later
-  let regexps = [/([\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, /\((.*)\) *[:|-]/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
+  let regexps = [/(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, /\((.*)\) *[:|-]/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
   let regexOpts = ['', '', '', ''];
 
   // Initialize the error displays
@@ -83,17 +83,17 @@ function startUp () {
         regexErrorsDisplayArray[numSuffix].nodeValue = ``;
         console.log("new regex: ", newRegex);
         // Need a sound to play when they previously had an error and cleared it.
+
+        // Filter the scraped output.
+        window.requestAnimationFrame(() => {
+          // hard code to start from the top
+          setImmediate(asyncFilter, evt, newRegex, rawBox.value);
+        });
       } catch(e) {
         sounds.error.resetPlay();
         regexErrorsDisplayArray[numSuffix].nodeValue = `Error: ${e}`;
         return;
       }
-
-      // Filter the scraped output.
-      window.requestAnimationFrame(() => {
-        // hard code to start from the top
-        setImmediate(asyncFilter, evt, newRegex, rawBox.value);
-      })
     }
   }
 
@@ -229,42 +229,72 @@ function makeTreeView() {
    This module should allow objects as arguments to specify a "mode", e.g., give output compatible to org-mode
 **/
 var baseURL = "http://localhost:8080/coolRoute" // mock
-function asyncFilter(evt, regex, text) {
+function asyncFilter(evt, regex/*Map*/, text) { // pass in a map eventually
   let renderFirstBatch = true;
   let matchesPerBatch = 100;
   let doneFlag = false;
   let tempAcc = '';
 
-  
   let hitRegex = / HIT: ([\s\S]*)/; //obtain first capture group
-  let sqlRegex = /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/; // obtain 0th capture group
   let classNameAndLineNumRegex = /\((.*)\) *[:|-]/;
-
+  let sqlRegex = /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/; // obtain 0th capture group
+  
+  // use a map instead of an array for O(1) inserts/replacing regexps
+  // 1-indexed because of how treeView and orgmodeViews both currently only start at level 1 because I look up parent as previous level
+  // This is a target for refactoring later
+  let regexMap = {1: regex, 2: hitRegex, 3: classNameAndLineNumRegex, 4: sqlRegex};
+  
   let treeView = makeTreeView();
   let orgModeView = makeOrgModeView();
   const DOMTargetParent = document.getElementById("treeView");
   const DOMTarget = DOMTargetParent.firstElementChild;
+  let currLevel = 1;
+
+  // May want to recursively go to different regex levels within the regexMap
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
     let matches = [];
     
-    if (!regex.global) {
-      let matchedString = text.match(regex)[0];
-      let hitMatch = matchedString.match(hitRegex);
-      let classNameAndLineNumMatch = classNameAndLineNumRegex.exec(matchedString);
-      let sqlMatch = matchedString.match(sqlRegex);
+    if (!regexMap[currLevel].global) {
 
-      if (hitMatch && hitMatch[1]) {
-        treeView.appendChild(1, hitMatch[1])
+      let currText = text;
+      let currMatch = ["one-time-init-value"];
+      while(currMatch && currMatch[currMatch.length - 1] && regexMap[currLevel]) { 
+        let currRegex = regexMap[currLevel];
+        currMatch = currText.match(currRegex) || currMatch;
+
+        if (!currMatch) break;
+        // Only deepest regex level is used, if no match at deepest level, quit
+        currText = currMatch[currMatch.length - 1];
+        // if (currMatch && currMatch[currMatch.length - 1] !== "") {
+
+        // }
+        
+        currLevel++;
       }
 
-      if (classNameAndLineNumRegex && sqlMatch) {
-        treeView.appendChild(2, classNameAndLineNumMatch[0])
-          .appendChild(3, sqlMatch[0]);
-      }
+      treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+      orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+
+      // Refactor
+      // from here
+      // let matchedString = text.match(regex)[0];
+      // let hitMatch = matchedString.match(hitRegex);
+      // let classNameAndLineNumMatch = classNameAndLineNumRegex.exec(matchedString);
+      // let sqlMatch = matchedString.match(sqlRegex);
+
+      // if (hitMatch && hitMatch[1]) {
+      //   treeView.appendChild(1, hitMatch[1])
+      // }
+
+      // if (classNameAndLineNumRegex && sqlMatch) {
+      //   treeView.appendChild(2, classNameAndLineNumMatch[0])
+      //     .appendChild(3, sqlMatch[0]);
+      // }
+      // // to here
 
       window.requestAnimationFrame(() => {
-        scrapeBox.value = matchedString;
+        scrapeBox.value = orgModeView.orgText;
         treeView.flushAttach(DOMTargetParent, DOMTarget);
       });
 
