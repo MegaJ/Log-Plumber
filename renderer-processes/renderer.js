@@ -15,7 +15,7 @@ const rawBox = idIt('rawBox');
 const scrapeBox = idIt('scrapeBox');
 const copyBtn = document.getElementById('copyBtn');
 const regexInputsArray = document.querySelectorAll('input[id^=regexInput]');
-const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]');
+const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]'); // Each element is a nodelist of /gim input elements
 const regexErrorsArray = document.querySelectorAll('code[id^=regexError]');
 const delegator = document.querySelector('#section\\.scrape div.delegator');
 
@@ -78,13 +78,7 @@ function startUp () {
 
   rawBox.wrap = scrapeBox.wrap ="off"; // unnecessary?
 
-  // regexps, regexOpts are not DOM elements, they are filled from their DOM
-  // conuterparts: regexInputsArray and regexOptionsArray respectively
-  
-  
-  // let regexps = [/(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, /\((.*)\) *[:|-]/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
-  // let regexOpts = ['', '', '', ''];
-
+  // CONSIDER: When implementing save, should have a try/catch to tell them if errors present.
   // Initialize the error displays
   let regexErrorsDisplayArray = [];
   regexErrorsArray.forEach((regexError, i) => {
@@ -95,7 +89,9 @@ function startUp () {
 
   // Fill in regexeps to display to user, order is guaranteed in ES6 for interger keys
   regexpRecords.forEach(({regexp}, i) => {
-    regexInputsArray[i].value = regexp.toString().slice(1, -1);
+    // CONSIDER: I'll be saving regexps with their flags, so when loading them, I'll have to make sure some inputs are checked
+    // Expecting matching to happen like this: [ '/a/', 'a', index: 0, input: '/a/g' ]
+    regexInputsArray[i].value = regexp.toString().match(/\/(.*)\//)[1];
   });
 
   rawBox.addEventListener('input', (evt) => window.requestAnimationFrame(() => {
@@ -268,9 +264,6 @@ function makeTreeView() {
     return treeView;
   }
 
-  /** 
-      Uncaught NotFoundError: Failed to execute 'replaceChild' on 'Node': The node to be replaced is not a child of this node.
-   **/
   function flushAttach(DOMTargetParent, DOMTarget) {
     window.requestAnimationFrame(() => {
       DOMTargetParent.replaceChild(fragment, DOMTarget);
