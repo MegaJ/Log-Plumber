@@ -27,15 +27,63 @@ require('./sounds').then((promisedSounds) => {
   sounds = promisedSounds;
 });
 
+function makeRegexRecord (regexp, regexpOpts, linkToLevel, passThru) {
+  return {
+    regexp: regexp,
+    regexpOpts: regexOpt,
+    linkToLevel: linkToLevel,
+    passThru: passThru
+  }
+}
+
+/** These records are hooked up to listeners that update these records
+    on DOM changes to regexInput*, regexOptions*, and linker elements
+    Regex Options are never displayed as a string in the UI
+**/
+// TODO: implement loading from stored json later
+// TODO: implement passThru
+// TODO: implement linking levels, meaning that you do not show a level
+//       unless its k-th child also exists.
+const regexpRecords = [
+  {
+    regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
+    opts: "",
+    link: null,
+    passThru: true
+  },
+
+  {
+    regexp:  /\((.*)\) *[:|-]/,
+    opts: "",
+    link: null,
+    passThru: true
+  },
+
+  {
+    regexp: / HIT: ([\s\S]*)/,
+    opts: "",
+    link: null,
+    passThru: true
+  },
+
+  {
+    regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
+    opts: "",
+    link: null,
+    passThru: true
+  }
+]
+
 function startUp () {
 
   rawBox.wrap = scrapeBox.wrap ="off"; // unnecessary?
 
   // regexps, regexOpts are not DOM elements, they are filled from their DOM
   // conuterparts: regexInputsArray and regexOptionsArray respectively
-  // TODO: implement loading from stored json later
-  let regexps = [/(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, /\((.*)\) *[:|-]/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
-  let regexOpts = ['', '', '', ''];
+  
+  
+  // let regexps = [/(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/, /\((.*)\) *[:|-]/, / HIT: ([\s\S]*)/, /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/];
+  // let regexOpts = ['', '', '', ''];
 
   // Initialize the error displays
   let regexErrorsDisplayArray = [];
@@ -45,13 +93,13 @@ function startUp () {
     regexErrorsDisplayArray[i] = regexError.childNodes[0];
   });
 
-  // Fill in regexeps to display to user.
-  regexps.forEach((regex, i) => {
-    regexInputsArray[i].value = regexps[i].toString().slice(1, -1);
+  // Fill in regexeps to display to user, order is guaranteed in ES6 for interger keys
+  regexpRecords.forEach(({regexp}, i) => {
+    regexInputsArray[i].value = regexp.toString().slice(1, -1);
   });
 
   rawBox.addEventListener('input', (evt) => window.requestAnimationFrame(() => {
-    setImmediate(asyncFilter, evt, regex0, rawBox.value);
+    setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
   }, {passive: true}));
 
   function delegationMakerHelper(listenerCallback) {
@@ -67,27 +115,29 @@ function startUp () {
     }
   }
   
-  function inputListenerCallback (evt, inputElement) {
+  function onRegexInputListener (evt, inputElement) {
     let regexInputIdRegexp = /regexInput([0-9]*)/;
     let match = inputElement.id.match(regexInputIdRegexp);
     if (match) {
       // TODO: stop asyncFilter with some sort of flag here
       let numSuffix = match[1];
+      let currRecord = regexpRecords[numSuffix];
       let newRegexString = regexInputsArray[numSuffix].value;
 
       // Attempt to use the regex, which may be invalid
       try {
-        let newRegex = new RegExp(newRegexString, regexOpts[numSuffix]);
+        let newRegexp = new RegExp(newRegexString, currRecord.opts);
+        currRecord.regexp = newRegexp;
         
         // Clear the previously displayed error if regex creation was successful
         regexErrorsDisplayArray[numSuffix].nodeValue = ``;
-        console.log("new regex: ", newRegex);
+        console.log("new regex: ", newRegexp);
         // Need a sound to play when they previously had an error and cleared it.
 
         // Filter the scraped output.
         window.requestAnimationFrame(() => {
           // hard code to start from the top
-          setImmediate(asyncFilter, evt, newRegex, rawBox.value);
+          setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
         });
       } catch(e) {
         sounds.error.resetPlay();
@@ -97,25 +147,31 @@ function startUp () {
     }
   }
 
-  function changeListenerCallback (evt, inputElement) {
+  function onOptionsChangeListener (evt, inputElement) {
     let regexOptionIdRegexp = /[gim]([0-9]*)/;
     let match = inputElement.id.match(regexOptionIdRegexp)
     if (match) {
       let changedCheckbox = inputElement;
       let numSuffix = match[1];
       let option = changedCheckbox.name;
-      regexOpts[numSuffix] = changedCheckbox.checked ? regexOpts[numSuffix] + option : regexOpts[numSuffix].replace(option, '');
-      let newRegex = new RegExp(regexps[numSuffix], regexOpts[numSuffix]);
+      let currRecord = regexpRecords[numSuffix];
+      currRecord.opts = changedCheckbox.checked ? currRecord.opts + option : currentOpts.replace(option, '');
+
+      // CONSIDER:
+      // If we update the regexpRecord to actually have the /gim flags,
+      // On implementing a save, we may want to strip the regex of the flags
+      // otherwise, user never gets /gim flags displayed as text, only as checked input boxes
+      currRecord.regexp = new RegExp(currRecord.regexp, currRecord.opts);
       
       sounds.affirm.resetPlay();
       window.requestAnimationFrame(() => {
-        // hard code to start from the top
-        setImmediate(asyncFilter, evt, newRegex, rawBox.value);
+        // hard code to start from the top, won't have to if I implement diffing
+        setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
       });
     }
   }
-  delegator.addEventListener('input', delegationMakerHelper(inputListenerCallback), {capture: true, passive: true});
-  delegator.addEventListener('change', delegationMakerHelper(changeListenerCallback), {capture: true, passive: true});
+  delegator.addEventListener('input', delegationMakerHelper(onRegexInputListener), {capture: true, passive: true});
+  delegator.addEventListener('change', delegationMakerHelper(onOptionsChangeListener), {capture: true, passive: true});
 
   copyBtn.addEventListener('click', (evt) => {
     let scrapedText = scrapeBox.value;
@@ -212,6 +268,9 @@ function makeTreeView() {
     return treeView;
   }
 
+  /** 
+      Uncaught NotFoundError: Failed to execute 'replaceChild' on 'Node': The node to be replaced is not a child of this node.
+   **/
   function flushAttach(DOMTargetParent, DOMTarget) {
     window.requestAnimationFrame(() => {
       DOMTargetParent.replaceChild(fragment, DOMTarget);
@@ -228,70 +287,36 @@ function makeTreeView() {
 
    This module should allow objects as arguments to specify a "mode", e.g., give output compatible to org-mode
 **/
-var baseURL = "http://localhost:8080/coolRoute" // mock
-function asyncFilter(evt, regex/*Map*/, text) { // pass in a map eventually
+function asyncFilter(evt, regexpRecords, text) {
   let renderFirstBatch = true;
   let matchesPerBatch = 100;
   let doneFlag = false;
-  let tempAcc = '';
 
-  let hitRegex = / HIT: ([\s\S]*)/; //obtain first capture group
-  let classNameAndLineNumRegex = /\((.*)\) *[:|-]/;
-  let sqlRegex = /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/; // obtain 0th capture group
-  
-  // use a map instead of an array for O(1) inserts/replacing regexps
-  // 1-indexed because of how treeView and orgmodeViews both currently only start at level 1 because I look up parent as previous level
-  // This is a target for refactoring later
-  let regexMap = {1: regex, 2: hitRegex, 3: classNameAndLineNumRegex, 4: sqlRegex};
+  let topLevelRegexp = regexpRecords[0].regexp;
   
   let treeView = makeTreeView();
   let orgModeView = makeOrgModeView();
   const DOMTargetParent = document.getElementById("treeView");
   const DOMTarget = DOMTargetParent.firstElementChild;
-  let currLevel = 1;
 
-  // May want to recursively go to different regex levels within the regexMap
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
     let matches = [];
     
-    if (!regexMap[currLevel].global) {
+    if (!regexpRecords[0].regexp.global) {
 
-      let currText = text;
-      let currMatch = ["one-time-init-value"];
-      while(currMatch && currMatch[currMatch.length - 1] && regexMap[currLevel]) { 
-        let currRegex = regexMap[currLevel];
-        currMatch = currText.match(currRegex) || currMatch;
-
-        if (!currMatch) break;
-        // Only deepest regex level is used, if no match at deepest level, quit
-        currText = currMatch[currMatch.length - 1];
-        // if (currMatch && currMatch[currMatch.length - 1] !== "") {
-
-        // }
-        
-        currLevel++;
+      // TODO: Refactor this into a function, it is duplicated inside the for-loop below
+      let matchedString = topLevelRegexp.exec(text);
+      let currLevel = 1; // 0 level is the top level regex
+      let currRegexp;
+      for (; currLevel < regexpRecords.length; currLevel++) {
+        currRegexp = regexpRecords[currLevel].regexp;
+        let currMatch = matchedString[matchedString.length - 1].match(currRegexp);
+        if (currMatch) {
+          treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+          orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+        }
       }
-
-      treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-      orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-
-      // Refactor
-      // from here
-      // let matchedString = text.match(regex)[0];
-      // let hitMatch = matchedString.match(hitRegex);
-      // let classNameAndLineNumMatch = classNameAndLineNumRegex.exec(matchedString);
-      // let sqlMatch = matchedString.match(sqlRegex);
-
-      // if (hitMatch && hitMatch[1]) {
-      //   treeView.appendChild(1, hitMatch[1])
-      // }
-
-      // if (classNameAndLineNumRegex && sqlMatch) {
-      //   treeView.appendChild(2, classNameAndLineNumMatch[0])
-      //     .appendChild(3, sqlMatch[0]);
-      // }
-      // // to here
 
       window.requestAnimationFrame(() => {
         scrapeBox.value = orgModeView.orgText;
@@ -303,53 +328,35 @@ function asyncFilter(evt, regex/*Map*/, text) { // pass in a map eventually
 
     // Do actual regex matching to tokenize text
     for(let i = 0; i < matchesPerBatch; i++) {
-      let matchedString = regex.exec(text);
+      let matchedString = topLevelRegexp.exec(text);
       if (!matchedString) {
         doneFlag = true;
         break;
       }
-      
-      let output;
-      let hitMatch = matchedString[0].match(hitRegex);
-      if (hitMatch) {
-        output = baseURL + hitMatch[1];
-        treeView.appendChild(1, output);
-        orgModeView.appendChild(1, output);
+
+      // currently there is no cutting the text into smaller units
+      // and feeding that smaller unit to the next regex
+      // the entire match is passed through,
+      // TODO: maybe make this a foreach loop
+      let currLevel = 1; // 0 level is the top level regex
+      let currRegexp;
+      for (; currLevel < regexpRecords.length; currLevel++) {
+        currRegexp = regexpRecords[currLevel].regexp;
+        let currMatch = matchedString[matchedString.length - 1].match(currRegexp);
+        if (currMatch) {
+          treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+          orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+        }
       }
-
-      let classNameAndLineNumMatch = classNameAndLineNumRegex.exec(matchedString[0]);
-      let sqlMatch = matchedString[0].match(sqlRegex);
-      
-      if(classNameAndLineNumMatch && sqlMatch) { // levels 2 & 3 are linked...hard coded for now
-        matches.push(classNameAndLineNumMatch[0] + "\n");
-        
-        output += sqlMatch[0];
-        matches.push(output);
-        
-        treeView.appendChild(2, classNameAndLineNumMatch[0]);
-        treeView.appendChild(3, sqlMatch[0]);
-
-        orgModeView.appendChild(2, classNameAndLineNumMatch[0]);
-        orgModeView.appendChild(3, sqlMatch[0]);
-      }
-    }
-
-    // accumulate the string matches
-    while(matchIndex < matches.length) { // [po], could try joining entire array, or do this in forloop
-      //tempAcc += matches[matchIndex];
-      matchIndex++;
     }
 
     // to give impression of responsiveness, render a small portion
     if(renderFirstBatch) {
       scrapeBox.value = orgModeView.orgText;
-      //scrapeBox.value = orgModeView.orgText;
-//      tempAcc = '';
       renderFirstBatch = false;
     }
 
     if (doneFlag) {
-      //      scrapeBox.value += tempAcc;
       scrapeBox.value = orgModeView.orgText;
       treeView.flushAttach(DOMTargetParent, DOMTarget);
       return;
