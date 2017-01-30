@@ -239,6 +239,7 @@ li input + ol > li {
     display: none;
     margin-left: -14px !important;
     padding-left: 1px;
+    white-space: pre-wrap;
 }
 
 li input:checked + ol > li {
