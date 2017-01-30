@@ -53,14 +53,14 @@ const regexpRecords = [
   },
 
   {
-    regexp:  /\((.*)\) *[:|-]/,
+    regexp: / HIT: ([\s\S]*)/,
     opts: "",
     link: null,
     passThru: true
   },
 
   {
-    regexp: / HIT: ([\s\S]*)/,
+    regexp:  /\((.*)\) *[:|-]/,
     opts: "",
     link: null,
     passThru: true
@@ -151,7 +151,7 @@ function startUp () {
       let numSuffix = match[1];
       let option = changedCheckbox.name;
       let currRecord = regexpRecords[numSuffix];
-      currRecord.opts = changedCheckbox.checked ? currRecord.opts + option : currentOpts.replace(option, '');
+      currRecord.opts = changedCheckbox.checked ? currRecord.opts + option : currRecord.opts.replace(option, '');
 
       // CONSIDER:
       // If we update the regexpRecord to actually have the /gim flags,
