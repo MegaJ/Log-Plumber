@@ -235,18 +235,34 @@ li:before {
   content: counters(depth, ".") ". ";
 }
 
+/* 
+Today is 29/01/2016
+Chromium does not update the selection text
+after a found-in-page event is emitted. I cannot get the DOM element in a straightforward way.
+If webContents.findInPage() is updated, it may be possible.
+If Chromium updates this in the future I can search 0pt font and expand the necessary DOM elements and make them visible 
+For now, I can check all checkboxes when search is fired... :|
+  */
 li input + ol > li {
     display: none;
+
+    /* font-size: 0; */
+    
     margin-left: -14px !important;
     padding-left: 1px;
-    white-space: pre-wrap;
 }
 
 li input:checked + ol > li {
     display: block;
+    /* font-size: 18px; */
     margin: 0 0 0.125em;
+    white-space: pre-wrap;
 }
 
+/* 
+Floats the checkbox to the left of the label
+even though in DOM structure, checkbox is after label
+ */
 li > input {
     position: absolute;
     display: inline-block;

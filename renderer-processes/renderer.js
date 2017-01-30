@@ -243,12 +243,17 @@ function makeTreeView() {
     let label = document.createElement("label");
     label.textContent = textData;
     li.appendChild(label);
-    
-    let parent = rightmostPath[level - 1] // || <insert some parent, so that the current li can still have a parent> ;
 
+    // Create parent if it does not exist
+    var parent = rightmostPath[level - 1];
+    if (!parent) {
+      appendChild(level - 1, "Log Plumber Tree Level Padding");
+    }
+    parent = rightmostPath[level - 1];
+    
     // Parents should only have checkboxes if there is more content
     // than just a label. I could do this more efficiently, by keeping
-    // an array of childless parents and delet their input/ol elements
+    // an array of childless parents and delete their input/ol elements
     // when flushing
     if (parent.childNodes.length === 1) {
       let checkbox = document.createElement("input");
