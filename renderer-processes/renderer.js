@@ -27,12 +27,12 @@ require('./sounds').then((promisedSounds) => {
   sounds = promisedSounds;
 });
 
-function makeRegexRecord (regexp, regexpOpts, linkToLevel, passThru) {
+function makeRegexRecord (regexp, regexpOpts, linkToLevel, scopeChildren) {
   return {
     regexp: regexp,
     regexpOpts: regexOpt,
     linkToLevel: linkToLevel,
-    passThru: passThru
+    scopeChildren: scopeChildren
   }
 }
 
@@ -41,36 +41,37 @@ function makeRegexRecord (regexp, regexpOpts, linkToLevel, passThru) {
     Regex Options are never displayed as a string in the UI
 **/
 // TODO: implement loading from stored json later
-// TODO: implement passThru
 // TODO: implement linking levels, meaning that you do not show a level
 //       unless its k-th child also exists.
 const regexpRecords = [
   {
+    //syslogd
+    // /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
     regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
     opts: "",
     link: null,
-    passThru: true
+    scopeChildren: true
   },
 
   {
     regexp: / HIT: ([\s\S]*)/,
     opts: "",
     link: null,
-    passThru: true
+    scopeChildren: false
   },
 
   {
     regexp:  /\((.*)\) *[:|-]/,
     opts: "",
     link: null,
-    passThru: true
+    scopeChildren: false
   },
 
   {
     regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
     opts: "",
     link: null,
-    passThru: true
+    scopeChildren: true
   }
 ]
 
@@ -144,6 +145,7 @@ function startUp () {
   }
 
   function onOptionsChangeListener (evt, inputElement) {
+    if (inputElement.type !== "checkbox") return;
     let regexOptionIdRegexp = /[gim]([0-9]*)/;
     let match = inputElement.id.match(regexOptionIdRegexp)
     if (match) {
@@ -332,15 +334,26 @@ function asyncFilter(evt, regexpRecords, text) {
         break;
       }
 
+      let textScope = matchedString[matchedString.length - 1];
+
       // currently there is no cutting the text into smaller units
       // and feeding that smaller unit to the next regex
       // the entire match is passed through,
       // TODO: maybe make this a foreach loop
       let currLevel = 1; // 0 level is the top level regex
       let currRegexp;
+      let currRecord;
       for (; currLevel < regexpRecords.length; currLevel++) {
-        currRegexp = regexpRecords[currLevel].regexp;
-        let currMatch = matchedString[matchedString.length - 1].match(currRegexp);
+        currRecord = regexpRecords[currLevel];
+        currRegexp = currRecord.regexp;
+        
+        let currMatch = textScope.match(currRegexp);
+        if (!currRecord.scopeChildren) {
+          // If there are no matches at this level, all levels below will not match, so break;
+          if (currMatch == null) break;
+          textScope = currMatch[currMatch.length - 1];
+        }
+
         if (currMatch) {
           treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
           orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
