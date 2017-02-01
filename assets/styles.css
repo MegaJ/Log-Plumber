@@ -9,6 +9,7 @@ html {
     min-height: 100%;
     overflow: hidden;
     -webkit-user-select: none;
+    -webkit-user-drag: none;
     cursor: default;
 }
 
@@ -153,17 +154,22 @@ textarea {
     overflow: scroll;
 }
 
-.regexOption {
+.regexOption, .hide-checkbox{
     display: none;
 }
 
 .linker {
+    font-family: Symbola;
     -webkit-user-select: auto;
 }
 
-.regexOption + label {
+.regexOption + label, .hide-checkbox + label {
     cursor: pointer;
     color: grey;
+}
+
+.hide-checkbox:checked + label{
+    color: inherit;
 }
 
 .regexOption:checked + label.g {
@@ -201,6 +207,10 @@ textarea {
 
 .left-margin {
     margin-left: 0.5em;
+}
+
+.right-margin {
+    margin-right: 0.5em;
 }
 
 .regexInput {

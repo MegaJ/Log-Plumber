@@ -46,8 +46,8 @@ function makeRegexRecord (regexp, regexpOpts, linkToLevel, scopeChildren) {
 const regexpRecords = [
   {
     //syslogd
-    // /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
-    regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
+    regexp: /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
+    // regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
     opts: "",
     link: null,
     scopeChildren: true
@@ -71,7 +71,7 @@ const regexpRecords = [
     regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
     opts: "",
     link: null,
-    scopeChildren: true
+    scopeChildren: false
   }
 ]
 
@@ -303,7 +303,7 @@ function asyncFilter(evt, regexpRecords, text) {
     let matchIndex = 0;
     let matches = [];
     
-    if (!regexpRecords[0].regexp.global) {
+    if (!topLevelRegexp.global) { //TODO: Match behavior with global regexp branch
 
       // TODO: Refactor this into a function, it is duplicated inside the for-loop below
       let matchedString = topLevelRegexp.exec(text);
@@ -348,7 +348,7 @@ function asyncFilter(evt, regexpRecords, text) {
         currRegexp = currRecord.regexp;
         
         let currMatch = textScope.match(currRegexp);
-        if (!currRecord.scopeChildren) {
+        if (currRecord.scopeChildren) {
           // If there are no matches at this level, all levels below will not match, so break;
           if (currMatch == null) break;
           textScope = currMatch[currMatch.length - 1];

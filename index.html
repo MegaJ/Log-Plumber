@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="./assets/styles.css" media="none" onload="this.media='all'">
-    <title>Log Plumber</title>
+    <title>Log Plumber 🛠</title>
   </head>
   <body>
     <nav>
       <header>
         <h1 class="slant">
-          Log Plumber <img src="./assets/imgs/plunger16.png" />
+          Log Plumber 🛠<img src="./assets/imgs/plunger16.png" />
         </h1>
       </header>
       <div>
@@ -45,34 +45,38 @@
         <header>The Plumber's Ledger</header>
         <div class="delegator">
           <div class="flex-container">
-            <span class="dejaVu removeRegex">▬</span>
-          <div id="regexOptions0" class="flex-containee-small dejaVu left-margin">
-            <span class="linker">L</span>
-            <input id="g0" name="g" type="checkbox" class="regexOption"/><label for="g0" class="g">◉</label>
-            <input id="i0" name="i" type="checkbox" class="regexOption"/><label for="i0" class="i">◉</label>
-            <input id="m0" name="m" type="checkbox" class="regexOption"/><label for="m0" class="m">◉</label>
+            <span class="dejaVu removeRegex"<em>▬</em></span>
+
+            <div id="regexOptions0" class="flex-containee-small dejaVu left-margin">
+              <input id="scopeChildren" name="scopeChildren" type="checkbox" class="hide-checkbox scopeChildren"></input><label for="scopeChildren"><strong>🔬</strong></label>
+              <span class="linker"><strong>&#x26d3;</strong></span>
+            <input id="g0" name="g" type="checkbox" class="regexOption"/><label for="g0" class="g"><strong>◉</strong></label>
+            <input id="i0" name="i" type="checkbox" class="regexOption"/><label for="i0" class="i"><strong>◉</strong></label>
+            <input id="m0" name="m" type="checkbox" class="regexOption"/><label for="m0" class="m"><strong>◉</strong></label>
            </div>
           <input id="regexInput0" class="regexInput flex-containee-large left-margin"/>
         </div>
           <code id="regexError0"></code>
           
           <div class="flex-container">
-            <span class="dejaVu removeRegex">▬</span>
-          <div id="regexOptions1" class="flex-containee-small dejaVu left-margin">
-           
-            <span class="linker">L</span>
-            <input id="g1" name="g" type="checkbox" class="regexOption"/><label for="g1" class="g">◉</label>
-            <input id="i1" name="i" type="checkbox" class="regexOption"/><label for="i1" class="i">◉</label>
-            <input id="m1" name="m" type="checkbox" class="regexOption"/><label for="m1" class="m">◉</label>
+            <span class="dejaVu removeRegex">▬</span>            
+            <div id="regexOptions1" class="flex-containee-small dejaVu left-margin">
+              <span class="scopeChildren">🔬</span>
+              <span class="linker">&#x26d3;</span>
+              <input id="g1" name="g" type="checkbox" class="regexOption"/><label for="g1" class="g">◉</label>
+              <input id="i1" name="i" type="checkbox" class="regexOption"/><label for="i1" class="i">◉</label>
+              <input id="m1" name="m" type="checkbox" class="regexOption"/><label for="m1" class="m">◉</label>
             </div>
-          <input id="regexInput1" class="regexInput flex-containee-large left-margin"/>
-        </div>
-        <code id="regexError1"></code>
+            <input id="regexInput1" class="regexInput flex-containee-large left-margin"/>
+          </div>
+          <code id="regexError1"></code>
         
         <div class="flex-container">
           <span class="dejaVu removeRegex">▬</span>
+          
           <div id="regexOptions2" class="flex-containee-small dejaVu left-margin">
-            <span class="linker">L</span>
+            <span class="scopeChildren">🔬</span>
+            <span class="linker">&#x26d3;</span>
             <input id="g2" name="g" type="checkbox" class="regexOption"/><label for="g2" class="g">◉</label>
             <input id="i2" name="i" type="checkbox" class="regexOption"/><label for="i2" class="i">◉</label>
             <input id="m2" name="m" type="checkbox" class="regexOption"/><label for="m2" class="m">◉</label>
@@ -83,12 +87,14 @@
         <div class="flex-container">
           <span class="dejaVu removeRegex">▬</span>
           <div id="regexOptions3" class="flex-containee-small dejaVu left-margin">
-            <span class="linker">L</span>
+            <span class="scopeChildren">🔬</span>
+            <span class="linker">&#x26d3;</span>
             <input id="g3" name="g" type="checkbox" class="regexOption"/><label for="g3" class="g">◉</label>
             <input id="i3" name="i" type="checkbox" class="regexOption"/><label for="i3" class="i">◉</label>
-            <input id="m3" name="m" type="checkbox" class="regexOption"/><label for="m3" class="m">◉</label>
-           </div>
+            <input id="m3" name="m" type="checkbox" class="regexOption"/><label for="m3" class="m">◉</label>            
+          </div>
           <input id="regexInput3" class="regexInput flex-containee-large left-margin"/>
+          
         </div>
         <code id="regexError3"></code>
         </div>
@@ -97,7 +103,6 @@
         <span id="newRegex" >✚</span>
         <span id="runLive"  >🗲</span>
         <span id="execute"  >►</span>
-        
         <h3> Raw Log Input </h3>
         <textarea id="rawBox" rows="4"></textarea>
 
