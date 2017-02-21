@@ -163,25 +163,35 @@ textarea {
     -webkit-user-select: auto;
 }
 
-.regexOption + label, .hide-checkbox + label {
+.regexOption + label,
+.regexOption + .tooltip label,
+.hide-checkbox + label {
     cursor: pointer;
     color: grey;
+}
+
+.removeRegex {
+    cursor: pointer;
 }
 
 .hide-checkbox:checked + label{
     color: inherit;
 }
 
-.regexOption:checked + label.g {
+.regexOption:checked + .tooltip label.g,
+.regexOption:checked + label.g
+{
     color: #00ffcc;
     background: #00ffcc;
 }
 
+.regexOption:checked + .tooltip label.i,
 .regexOption:checked + label.i {
     color: #66ff66;
     background: #66ff66
 }
 
+.regexOption:checked + .tooltip label.m,
 .regexOption:checked + label.m {
     color: #ccff00;
     background: #ccff00
@@ -222,6 +232,48 @@ textarea {
 .dejaVu {
         font-size: 16px;
         font-family: "DejaVu Sans Mono Bold";
+}
+
+/* Tooltip CSS taken from https://www.w3schools.com/css/css_tooltip.asp */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    opacity: 0;
+    width: 180px;
+    background-color:#555;
+    color: #fff;
+    text-align: left;
+    padding: 5px 5px;
+    border-radius: 0px 6px 6px 6px;
+    font-family: 'Open Sans Condensed', sans-serif;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 9999;
+    top: 100%;
+    left: 50%;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    bottom: 100%;  /* At the top of the tooltip */
+    left: 2%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent;
 }
 
 .removeRegex {
