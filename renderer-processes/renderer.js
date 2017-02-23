@@ -27,11 +27,10 @@ require('./sounds').then((promisedSounds) => {
   sounds = promisedSounds;
 });
 
-function makeRegexRecord (regexp, regexpOpts, linkToLevel, scopeChildren) {
+function makeRegexRecord (regexp, regexpOpts, scopeChildren) {
   return {
     regexp: regexp,
     regexpOpts: regexOpt,
-    linkToLevel: linkToLevel,
     scopeChildren: scopeChildren
   }
 }
@@ -40,40 +39,40 @@ function makeRegexRecord (regexp, regexpOpts, linkToLevel, scopeChildren) {
     on DOM changes to regexInput*, regexOptions*, and linker elements
     Regex Options are never displayed as a string in the UI
 **/
+// TODO: make all options include the /u flag?
 // TODO: implement loading from stored json later
 // TODO: implement linking levels, meaning that you do not show a level
 //       unless its k-th child also exists.
 const regexpRecords = [
   {
     //syslogd
-    regexp: /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
-    // regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
+    //regexp: /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
+     regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
     opts: "",
-    link: null,
     scopeChildren: true
   },
 
   {
     regexp: / HIT: ([\s\S]*)/,
     opts: "",
-    link: null,
     scopeChildren: false
   },
 
   {
     regexp:  /\((.*)\) *[:|-]/,
     opts: "",
-    link: null,
     scopeChildren: false
   },
 
   {
     regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
     opts: "",
-    link: null,
     scopeChildren: false
   }
 ]
+
+// Level 2 goes to level 3
+var linkLevels = {};
 
 function startUp () {
 
@@ -146,7 +145,7 @@ function startUp () {
 
   function onOptionsChangeListener (evt, inputElement) {
     if (inputElement.type !== "checkbox") return;
-    let regexOptionIdRegexp = /[gim]([0-9]*)/;
+    let regexOptionIdRegexp = /[gimu]([0-9]*)/;
     let match = inputElement.id.match(regexOptionIdRegexp)
     if (match) {
       let changedCheckbox = inputElement;
@@ -156,9 +155,9 @@ function startUp () {
       currRecord.opts = changedCheckbox.checked ? currRecord.opts + option : currRecord.opts.replace(option, '');
 
       // CONSIDER:
-      // If we update the regexpRecord to actually have the /gim flags,
+      // If we update the regexpRecord to actually have the /gimu flags,
       // On implementing a save, we may want to strip the regex of the flags
-      // otherwise, user never gets /gim flags displayed as text, only as checked input boxes
+      // otherwise, user never gets /gimu flags displayed as text, only as checked input boxes
       currRecord.regexp = new RegExp(currRecord.regexp, currRecord.opts);
       
       sounds.affirm.resetPlay();
@@ -190,6 +189,101 @@ function initializeOtherListeners () {
       });
     })
   }, {passive: true});
+
+  var mouseupListener = function() {
+
+    // Find out which link nodes have been selected by the selection
+    let range = window.getSelection().getRangeAt(0);
+    let searchContext = document.querySelectorAll(".linker");
+    if (!range.startContainer.tagName) {
+      range.setStart(range.startContainer.parentElement, 0);
+    }
+    if (!range.endContainer.tagName) {
+      range.setEnd(range.endContainer.parentElement, 0);
+    }
+    var linkExtent = binarySearchForLinkExtent(range, searchContext, 0, searchContext.length - 1);
+
+    if (linkExtent) {
+      linkLevels[linkExtent["left"]] = linkExtent["right"];
+    }
+    
+    window.getSelection().removeAllRanges();
+    document.addEventListener("selectionchange", textSelectionListener);
+    document.removeEventListener("mouseup", mouseupListener); // event listener once option not implemented till Chrome 55
+  }
+
+  var textSelectionListener = function (event) {
+    var sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+
+      // If delegator contains the link text, wait for the selection to finalize on a keyup or a mouseup?
+      if(delegator.contains(sel.anchorNode)) {
+        document.removeEventListener("selectionchange", textSelectionListener);
+        document.addEventListener("mouseup", mouseupListener, {once: true, passive: true});
+      }
+    }
+  }
+  document.addEventListener("selectionchange", textSelectionListener, {passive: true});
+}
+
+function binarySearchForLinkExtent(range, searchContext, left, right) {
+  if (left > right) return null;
+
+  var mid = Math.floor(left + (right - left) / 2); // Attempt to prevent integer overflow
+  var midElement = searchContext[mid];
+  var comparisonResult = range.comparePoint(midElement, 0);
+
+  if (comparisonResult === 0) {
+    // phase 2, found an item in the range
+    return {
+      left: binarySearchForLeftLink(range, searchContext, left, mid),
+      right: binarySearchForRightLink(range, searchContext, mid, right)
+    };
+  } else if (comparisonResult === -1) {
+    return binarySearchForLinkExtent(range, searchContext, mid + 1, right);
+  } else if (comparePointResult === 1) {
+    return binarySearchForLinkExtent(range, searchContext, left, mid - 1);
+  }
+}
+
+function binarySearchForLeftLink(range, searchContext, left, right) {
+  if (left > right) return right;
+  if (left === right) return right;
+
+  var mid = Math.floor(left + (right - left) / 2); // Attempt to prevent integer overflow
+  var midElement = searchContext[mid];
+  var comparisonResult = range.comparePoint(midElement, 0);
+
+  // mid is still in the selection range
+  if (comparisonResult === 0) {
+    return binarySearchForLeftLink(range, searchContext, left, mid);
+  } else if (comparisonResult === -1) {
+    return binarySearchForLeftLink(range, searchContext, mid + 1, right);
+  }
+
+  if (comparisonResult === 1) {
+    throw new Exception("binary search failure");
+  }
+}
+
+function binarySearchForRightLink(range, searchContext, left, right) {
+  if (left > right) return right;
+  if (left === right) return right;
+
+  var mid = Math.ceil(left + (right - left) / 2); // Attempt to prevent integer overflow
+  var midElement = searchContext[mid];
+  var comparisonResult = range.comparePoint(midElement, 0);
+
+  // mid is still in the selection range
+  if (comparisonResult === 0) {
+    return binarySearchForRightLink(range, searchContext, mid, right);
+  } else if (comparisonResult === 1) {
+    return binarySearchForRightLink(range, searchContext, left, mid - 1);
+  }
+
+  if (comparisonResult === -1) {
+    throw new Exception("binary search failure");
+  }
 }
 
 function makeOrgModeView() {
@@ -336,27 +430,56 @@ function asyncFilter(evt, regexpRecords, text) {
 
       let textScope = matchedString[matchedString.length - 1];
 
-      // currently there is no cutting the text into smaller units
-      // and feeding that smaller unit to the next regex
-      // the entire match is passed through,
       // TODO: maybe make this a foreach loop
       let currLevel = 1; // 0 level is the top level regex
+      let lastLevelBeforeLinkStart;
+      let resultBuffer = [];
+      
       let currRegexp;
       let currRecord;
       for (; currLevel < regexpRecords.length; currLevel++) {
         currRecord = regexpRecords[currLevel];
         currRegexp = currRecord.regexp;
+
+        let beginLink = linkLevels[currLevel];
+        if (beginLink) {
+          lastLevelBeforeLinkStart = currLevel - 1;
+        }
         
         let currMatch = textScope.match(currRegexp);
         if (currRecord.scopeChildren) {
           // If there are no matches at this level, all levels below will not match, so break;
-          if (currMatch == null) break;
+          if (currMatch == null) {
+            resultBuffer = null;
+            break;
+          }
           textScope = currMatch[currMatch.length - 1];
         }
 
-        if (currMatch) {
+        // can't put things into this view until things actually exist
+        if (currMatch && !lastLevelBeforeLinkStart) {
           treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
           orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+        }
+
+        // save result in a buffer
+        if (currMatch && lastLevelBeforeLinkStart) {
+          resultBuffer.push(currMatch[currMatch.length - 1]);
+        }
+
+        // Flush result buffer to views
+        if (currLevel === linkLevels[lastLevelBeforeLinkStart + 1]) {
+          if (!currMatch) {
+            resultBuffer = null;
+          } else {
+            for (let k = 0; k < resultBuffer.length; k++) {
+              treeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
+              orgModeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
+            }
+          }
+          
+          lastLevelBeforeLinkStart = null;
+          traversingInLinkedState = false;
         }
       }
     }

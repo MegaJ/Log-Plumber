@@ -161,6 +161,11 @@ textarea {
 .linker {
     font-family: Symbola;
     -webkit-user-select: auto;
+    color: grey;
+}
+
+.linker-active {
+    color: inherit;
 }
 
 .regexOption + label,
@@ -170,8 +175,12 @@ textarea {
     color: grey;
 }
 
-.removeRegex {
+.pointer {
     cursor: pointer;
+}
+
+.grey {
+    color: grey;
 }
 
 .hide-checkbox:checked + label{
@@ -225,6 +234,7 @@ textarea {
 
 .regexInput {
     display: inline;
+    font-family: "DejaVu Sans Mono";
 }
 
 /* make this a class so naming is clear */
@@ -246,7 +256,7 @@ textarea {
     visibility: hidden;
     opacity: 0;
     width: 180px;
-    background-color:#555;
+    background-color: #61709e;
     color: #fff;
     text-align: left;
     padding: 5px 5px;
