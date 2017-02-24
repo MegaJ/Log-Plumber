@@ -190,10 +190,12 @@ function initializeOtherListeners () {
     })
   }, {passive: true});
 
-  var mouseupListener = function() {
+  var range = {};
+
+  var mouseupListener = function(event) {
 
     // Find out which link nodes have been selected by the selection
-    let range = window.getSelection().getRangeAt(0);
+    //let range = sel.getRangeAt(0);
     let searchContext = document.querySelectorAll(".linker");
     if (!range.startContainer.tagName) {
       range.setStart(range.startContainer.parentElement, 0);
@@ -205,21 +207,34 @@ function initializeOtherListeners () {
 
     if (linkExtent) {
       linkLevels[linkExtent["left"]] = linkExtent["right"];
+      window.getSelection().removeAllRanges(); // remove ranges when we actually selected over linker spans
     }
     
-    window.getSelection().removeAllRanges();
     document.addEventListener("selectionchange", textSelectionListener);
-    document.removeEventListener("mouseup", mouseupListener); // event listener once option not implemented till Chrome 55
+    document.removeEventListener("mouseup", mouseupListener, {once: true, passive: true}); // event listener once option not implemented till Chrome 55
   }
 
   var textSelectionListener = function (event) {
     var sel = window.getSelection();
     if (sel.rangeCount > 0) {
-
+      range = sel.getRangeAt(0);
       // If delegator contains the link text, wait for the selection to finalize on a keyup or a mouseup?
       if(delegator.contains(sel.anchorNode)) {
-        document.removeEventListener("selectionchange", textSelectionListener);
-        document.addEventListener("mouseup", mouseupListener, {once: true, passive: true});
+        
+        // var selectionStartInInputBox = false;
+        // var currChild = sel.anchorNode;
+        // while(currChild !== delegator) {
+        //   if (/regexInput[0-9]+/.test(currChild.id)) {
+        //     selectionStartInInputBox = true;
+        //   }
+
+        //   currChild = currChild.parentElement;
+        // }
+
+        // if (!selectionStartInInputBox) {
+          document.removeEventListener("selectionchange", textSelectionListener);
+          document.addEventListener("mouseup", mouseupListener, {once: true, passive: true});
+        // }
       }
     }
   }
@@ -241,13 +256,12 @@ function binarySearchForLinkExtent(range, searchContext, left, right) {
     };
   } else if (comparisonResult === -1) {
     return binarySearchForLinkExtent(range, searchContext, mid + 1, right);
-  } else if (comparePointResult === 1) {
+  } else if (comparisonResult === 1) {
     return binarySearchForLinkExtent(range, searchContext, left, mid - 1);
   }
 }
 
 function binarySearchForLeftLink(range, searchContext, left, right) {
-  if (left > right) return right;
   if (left === right) return right;
 
   var mid = Math.floor(left + (right - left) / 2); // Attempt to prevent integer overflow
@@ -267,7 +281,6 @@ function binarySearchForLeftLink(range, searchContext, left, right) {
 }
 
 function binarySearchForRightLink(range, searchContext, left, right) {
-  if (left > right) return right;
   if (left === right) return right;
 
   var mid = Math.ceil(left + (right - left) / 2); // Attempt to prevent integer overflow
@@ -393,6 +406,10 @@ function asyncFilter(evt, regexpRecords, text) {
   const DOMTargetParent = document.getElementById("treeView");
   const DOMTarget = DOMTargetParent.firstElementChild;
 
+  /** TODO: Have to save state between scrapeBoxFiller calls,
+      I can do that here so the variables will be within closure
+   **/
+
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
     let matches = [];
@@ -420,6 +437,7 @@ function asyncFilter(evt, regexpRecords, text) {
       return;
     }
 
+    let resultBuffer = [];
     // Do actual regex matching to tokenize text
     for(let i = 0; i < matchesPerBatch; i++) {
       let matchedString = topLevelRegexp.exec(text);
@@ -430,14 +448,14 @@ function asyncFilter(evt, regexpRecords, text) {
 
       let textScope = matchedString[matchedString.length - 1];
 
-      // TODO: maybe make this a foreach loop
       let currLevel = 1; // 0 level is the top level regex
+
+      // May need to remember these outside of this loop
       let lastLevelBeforeLinkStart;
-      let resultBuffer = [];
       
       let currRegexp;
       let currRecord;
-      for (; currLevel < regexpRecords.length; currLevel++) {
+      for (; currLevel < regexpRecords.length; currLevel++) {        
         currRecord = regexpRecords[currLevel];
         currRegexp = currRecord.regexp;
 
@@ -450,10 +468,15 @@ function asyncFilter(evt, regexpRecords, text) {
         if (currRecord.scopeChildren) {
           // If there are no matches at this level, all levels below will not match, so break;
           if (currMatch == null) {
-            resultBuffer = null;
             break;
           }
           textScope = currMatch[currMatch.length - 1];
+        }
+
+        // Clear buffer if we are branching the tree from another parent
+        // There is another parent if currLevel is ancestor of level where linking starts
+        if (currMatch && lastLevelBeforeLinkStart && currLevel <= lastLevelBeforeLinkStart) {
+          resultBuffer = [];
         }
 
         // can't put things into this view until things actually exist
@@ -464,14 +487,13 @@ function asyncFilter(evt, regexpRecords, text) {
 
         // save result in a buffer
         if (currMatch && lastLevelBeforeLinkStart) {
-          resultBuffer.push(currMatch[currMatch.length - 1]);
+          let offset = currLevel - (lastLevelBeforeLinkStart + 1);
+          resultBuffer[offset] = currMatch[currMatch.length - 1];
         }
 
-        // Flush result buffer to views
+        // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
         if (currLevel === linkLevels[lastLevelBeforeLinkStart + 1]) {
-          if (!currMatch) {
-            resultBuffer = null;
-          } else {
+          if (currMatch) {
             for (let k = 0; k < resultBuffer.length; k++) {
               treeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
               orgModeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
