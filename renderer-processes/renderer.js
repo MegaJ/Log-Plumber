@@ -190,12 +190,10 @@ function initializeOtherListeners () {
     })
   }, {passive: true});
 
-  var range = {};
-
   var mouseupListener = function(event) {
 
     // Find out which link nodes have been selected by the selection
-    //let range = sel.getRangeAt(0);
+    let range = window.getSelection().getRangeAt(0);
     let searchContext = document.querySelectorAll(".linker");
     if (!range.startContainer.tagName) {
       range.setStart(range.startContainer.parentElement, 0);
@@ -217,7 +215,6 @@ function initializeOtherListeners () {
   var textSelectionListener = function (event) {
     var sel = window.getSelection();
     if (sel.rangeCount > 0) {
-      range = sel.getRangeAt(0);
       // If delegator contains the link text, wait for the selection to finalize on a keyup or a mouseup?
       if(delegator.contains(sel.anchorNode)) {
         
