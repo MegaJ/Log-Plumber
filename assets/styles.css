@@ -113,7 +113,7 @@ body {
 }
 
 .content {
-    margin-left: 40px;
+    /* margin-left: 40px; */
     margin-bottom: 20px;
     padding: 0;
     flex: 1;
@@ -256,7 +256,7 @@ textarea {
     visibility: hidden;
     opacity: 0;
     width: 180px;
-    background-color: #61709e;
+    background-color: #61709e; /* purple */
     color: #fff;
     text-align: left;
     padding: 5px 5px;
@@ -283,7 +283,7 @@ textarea {
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: transparent transparent #555 transparent;
+    border-color: transparent transparent  #61709e transparent;
 }
 
 .removeRegex {

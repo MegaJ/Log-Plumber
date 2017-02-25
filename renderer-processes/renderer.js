@@ -433,8 +433,10 @@ function asyncFilter(evt, regexpRecords, text) {
 
       return;
     }
-
+    
     let resultBuffer = [];
+    let previousPassResultBufferIndex = -1;
+    let resultBufferIndex = null;
     // Do actual regex matching to tokenize text
     for(let i = 0; i < matchesPerBatch; i++) {
       let matchedString = topLevelRegexp.exec(text);
@@ -449,17 +451,14 @@ function asyncFilter(evt, regexpRecords, text) {
 
       // May need to remember these outside of this loop
       let lastLevelBeforeLinkStart;
-      
+
+      // TODO: This loop is now more complex than I am comfortable with.
+      // [RC]
       let currRegexp;
       let currRecord;
       for (; currLevel < regexpRecords.length; currLevel++) {        
         currRecord = regexpRecords[currLevel];
         currRegexp = currRecord.regexp;
-
-        let beginLink = linkLevels[currLevel];
-        if (beginLink) {
-          lastLevelBeforeLinkStart = currLevel - 1;
-        }
         
         let currMatch = textScope.match(currRegexp);
         if (currRecord.scopeChildren) {
@@ -470,38 +469,63 @@ function asyncFilter(evt, regexpRecords, text) {
           textScope = currMatch[currMatch.length - 1];
         }
 
+        let beginLink = linkLevels[currLevel];
+        if (beginLink) {
+          lastLevelBeforeLinkStart = currLevel - 1;
+        }
+
         // Clear buffer if we are branching the tree from another parent
         // There is another parent if currLevel is ancestor of level where linking starts
-        if (currMatch && lastLevelBeforeLinkStart && currLevel <= lastLevelBeforeLinkStart) {
+        if (currMatch && Number.isInteger(lastLevelBeforeLinkStart) && currLevel <= lastLevelBeforeLinkStart) {
           resultBuffer = [];
+          resultBufferIndex = null;
         }
 
         // can't put things into this view until things actually exist
-        if (currMatch && !lastLevelBeforeLinkStart) {
+        if (currMatch && !Number.isInteger(lastLevelBeforeLinkStart)) {
           treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
           orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
         }
 
+        // Why am I struggling here? offset
         // save result in a buffer
-        if (currMatch && lastLevelBeforeLinkStart) {
-          let offset = currLevel - (lastLevelBeforeLinkStart + 1);
-          resultBuffer[offset] = currMatch[currMatch.length - 1];
+        if (currMatch && Number.isInteger(lastLevelBeforeLinkStart)) {
+          let currOffset = currLevel - (lastLevelBeforeLinkStart + 1);
+          resultBuffer[currOffset] = currMatch[currMatch.length - 1];
+
+          if (resultBufferIndex === null) {
+            resultBufferIndex = currOffset;
+          }
+
+          if (resultBufferIndex > 0) {
+            resultBufferIndex = resultBufferIndex > currOffset ? currOffset : resultBufferIndex;
+          }
         }
 
+
+        let endLevel = linkLevels[lastLevelBeforeLinkStart + 1];
+        let linkLength = endLevel - lastLevelBeforeLinkStart;
+        // Suspect: need to loop through only a continguous subportion of the resultBuffer.
         // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
-        if (currLevel === linkLevels[lastLevelBeforeLinkStart + 1]) {
-          if (currMatch) {
-            for (let k = 0; k < resultBuffer.length; k++) {
+        if (currLevel === endLevel) {
+          let shouldFlush = currMatch && Number.isInteger(resultBufferIndex);
+          if (shouldFlush) {
+            for (let k = resultBufferIndex; k < resultBufferIndex + linkLength; k++) {
               treeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
               orgModeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
             }
+
+            resultBufferIndex = null;
           }
           
           lastLevelBeforeLinkStart = null;
-          traversingInLinkedState = false;
+          traversingInLinkedState = false; // TODO: use this instead of lastLevelBeforeLinkStart
         }
       }
+      previousPassResultBufferIndex = resultBufferIndex;
     }
+
+    
 
     // to give impression of responsiveness, render a small portion
     if(renderFirstBatch) {
