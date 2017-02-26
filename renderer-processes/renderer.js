@@ -144,10 +144,22 @@ function startUp () {
     }
   }
 
+  // TODO: refactor this
   function onOptionsChangeListener (evt, inputElement) {
     if (inputElement.type !== "checkbox") return;
+
+    let scopeChildrenRegexp = /scopeChildren([0-9])*/;
+    let match = inputElement.id.match(scopeChildrenRegexp);
+    if (match) {
+      let changedCheckbox = inputElement;
+      let numSuffix = match[1];
+      let currRecord = regexpRecords[numSuffix];
+      currRecord.scopeChildren = changedCheckbox.checked ? true : false;
+      return;
+    }
+
     let regexOptionIdRegexp = /[gimu]([0-9]*)/;
-    let match = inputElement.id.match(regexOptionIdRegexp)
+    match = inputElement.id.match(regexOptionIdRegexp)
     if (match) {
       let changedCheckbox = inputElement;
       let numSuffix = match[1];
@@ -167,6 +179,7 @@ function startUp () {
         setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
       });
     }
+    
   }
   delegator.addEventListener('input', delegationMakerHelper(onRegexInputListener), {capture: true, passive: true});
   delegator.addEventListener('change', delegationMakerHelper(onOptionsChangeListener), {capture: true, passive: true});

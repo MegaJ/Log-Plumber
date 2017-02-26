@@ -193,6 +193,10 @@ body {
     padding: 0px 20px 20px 20px;
 }
 
+/* main { */
+/*     overflow-y: scroll; */
+/* } */
+
 .left-margin-major {
     margin-left: 3em;
 }
@@ -203,9 +207,16 @@ textarea {
     min-height: 100px;
     white-space:pre;
     overflow: scroll;
-    color: white;
-    background-color: #000;
-    border-radius: 2px;
+    color: #eee;
+    background-color: #778284;
+    border-radius: 3px;
+}
+
+/* If I add other selectors, this won't work for some reason  */
+textarea::-webkit-input-placeholder {
+/* textarea::placeholder, */
+/* input::placeholder { */
+    color: #bbbbbb;
 }
 
 .regexOption, .hide-checkbox{
@@ -311,7 +322,6 @@ indicate the linkage of levels.
 .regexInput {
     display: inline;
     font-family: "DejaVu Sans Mono";
-    padding-right: 20px;
     
 /* } */
 
