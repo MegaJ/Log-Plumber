@@ -3,52 +3,53 @@
   <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="./assets/styles.css" media="none" onload="this.media='all'">
+     <link rel="shortcut icon" href="./assets/imgs/plunger16.png" type="image/png">
     <title>Log Plumber 🛠</title>
   </head>
   <body>
-    <!-- <nav> -->
-    <!--   <header> -->
-    <!--     <h1 class="slant"> -->
-    <!--       Log Plumber <img src="./assets/imgs/plunger16.png" /> -->
-    <!--     </h1> -->
-    <!--   </header> -->
-    <!--   <div> -->
-    <!--     <h5> -->
-    <!--       Logs to Trees -->
-    <!--     </h5> -->
-    <!--     <button id="show-section.scrape">Turn flat logs to <em>hierarchical logs</em> -->
-    <!--     </button> -->
-    <!--   </div> -->
+    <nav>
+      <header>
+        <h1 class="slant">
+          Log Plumber <img src="./assets/imgs/plunger16.png" alt="🛠"/>
+        </h1>
+      </header>
+      <div>
+        <h5>
+          Logs to Trees
+        </h5>
+        <button id="show-section.scrape">Turn flat logs to <em>hierarchical logs</em>
+        </button>
+      </div>
 
-    <!--   <div> -->
-    <!--     <h5> -->
-    <!--       Misc tasks -->
-    <!--     </h5> -->
-    <!--     <button id="show-section.tasks">Modify and run<em>custom scripts</em> -->
-    <!--     </button> -->
-    <!--   </div> -->
-    <!--   <div> -->
-    <!--     <h5> -->
-    <!--       SFX -->
-    <!--     </h5> -->
-    <!--     <button id="show-section.sfx"> Sound and Visuals<em>!</em> -->
-    <!--     </button> -->
-    <!--   </div> -->
+      <div>
+        <h5>
+          Misc tasks
+        </h5>
+        <button id="show-section.tasks">Modify and run<em>custom scripts</em>
+        </button>
+      </div>
+      <div>
+        <h5>
+          SFX
+        </h5>
+        <button id="show-section.sfx"> Sound and Visuals<em>!</em>
+        </button>
+      </div>
       
-    <!--   <footer> -->
-    <!--     Footerrrrr -->
-    <!--   </footer> -->
-    <!-- </nav> -->
+      <footer>
+        Footerrrrr
+      </footer>
+    </nav>
 
     <main class="content">
       <section id="section.scrape" class="section">
-        <header>The Plumber's Ledger</header>
+        <h3 class="fat-header bottom-shadow">The Plumber's Ledger</h3>
         <div class="delegator">
           <div class="flex-container">
-            <span class="dejaVu removeRegex pointer"<em>▬</em></span>
+            <span class="dejaVuBold removeRegex pointer"><em>▬</em></span>
 
-            <div id="regexOptions0" class="flex-containee-small dejaVu left-margin">
-              <input id="scopeChildren0" checked name="scopeChildren0" type="checkbox" class="hide-checkbox scopeChildren"></input><label for="forceAlwaysChecked">
+            <div id="regexOptions0" class="flex-containee-small dejaVuBold left-margin">
+              <input id="scopeChildren0" checked name="scopeChildren0" type="checkbox" class="hide-checkbox scopeChildren"/><label for="forceAlwaysChecked">
                 <div class="tooltip">
                   <strong>🔬</strong>
                   <p class="tooltiptext tooltip-bottom"><strong>Scope:</strong>
@@ -58,7 +59,7 @@
               </label>
               <div class="tooltip">
                 <span class="linker"><strong>&#x26d3;</strong></span>
-                <p class="tooltiptext tooltip-bottom"><strong>Linking:</strong> Force results of the corresponding regular expression to be shown only when adjacently linked levels find a match.</p>
+                <p class="tooltiptext tooltip-bottom"><strong>Linking:</strong> Force results of the corresponding regular expression to be shown only when adjacently linked levels find a match. Click then drag your mouse across consecutive links to create a linkage between levels.</p>
               </div>
               <input id="g0" name="g" type="checkbox" class="regexOption"/>
               <div class="tooltip">
@@ -94,12 +95,12 @@
             </label>
 
             <input id="regexInput0" class="regexInput flex-containee-large left-margin"/>
-        </div>
+          </div>
           <code id="regexError0"></code>
           
           <div class="flex-container">
-            <span class="dejaVu removeRegex pointer">▬</span>            
-            <div id="regexOptions1" class="flex-containee-small dejaVu left-margin">
+            <span class="dejaVuBold removeRegex pointer">▬</span>            
+            <div id="regexOptions1" class="flex-containee-small dejaVuBold left-margin">
 
               <input id="scopeChildren1" name="scopeChildren1" type="checkbox" class="hide-checkbox scopeChildren"/><label for="scopeChildren1">
                 <span class="scopeChildren">🔬</span>
@@ -113,57 +114,68 @@
             <input id="regexInput1" class="regexInput flex-containee-large left-margin"/>
           </div>
           <code id="regexError1"></code>
-        
-        <div class="flex-container">
-          <span class="dejaVu removeRegex pointer">▬</span>
           
-          <div id="regexOptions2" class="flex-containee-small dejaVu left-margin">
-            <input id="scopeChildren2" name="scopeChildren2" type="checkbox" class="hide-checkbox scopeChildren"/><label for="scopeChildren2">
+          <div class="flex-container">
+            <span class="dejaVuBold removeRegex pointer">▬</span>
+            
+            <div id="regexOptions2" class="flex-containee-small dejaVuBold left-margin">
+              <input id="scopeChildren2" name="scopeChildren2" type="checkbox" class="hide-checkbox scopeChildren"/><label for="scopeChildren2">
                 <span class="scopeChildren">🔬</span>
               </label>
-            <span class="linker">&#x26d3;</span>
-            <input id="g2" name="g" type="checkbox" class="regexOption"/><label for="g2" class="g">◉</label>
-            <input id="i2" name="i" type="checkbox" class="regexOption"/><label for="i2" class="i">◉</label>
-            <input id="m2" name="m" type="checkbox" class="regexOption"/><label for="m2" class="m">◉</label>
+              <span class="linker">&#x26d3;</span>
+              <input id="g2" name="g" type="checkbox" class="regexOption"/><label for="g2" class="g">◉</label>
+              <input id="i2" name="i" type="checkbox" class="regexOption"/><label for="i2" class="i">◉</label>
+              <input id="m2" name="m" type="checkbox" class="regexOption"/><label for="m2" class="m">◉</label>
             </div>
-          <input id="regexInput2"  class="regexInput flex-containee-large left-margin"/>
-        </div>
-        <code id="regexError2"></code>
-        <div class="flex-container">
-          <span class="dejaVu removeRegex pointer">▬</span>
-          <div id="regexOptions3" class="flex-containee-small dejaVu left-margin">
-            <input id="scopeChildren3" name="scopeChildren3" type="checkbox" class="hide-checkbox scopeChildren"/><label for="scopeChildren3">
+            <input id="regexInput2"  class="regexInput flex-containee-large left-margin"/>
+          </div>
+          <code id="regexError2"></code>
+          <div class="flex-container">
+            <span class="dejaVuBold removeRegex pointer">▬</span>
+            <div id="regexOptions3" class="flex-containee-small dejaVuBold left-margin">
+              <input id="scopeChildren3" name="scopeChildren3" type="checkbox" class="hide-checkbox scopeChildren"/><label for="scopeChildren3">
                 <span class="scopeChildren3">🔬</span>
               </label>
-            <span class="linker">&#x26d3;</span>
-            <input id="g3" name="g" type="checkbox" class="regexOption"/><label for="g3" class="g">◉</label>
-            <input id="i3" name="i" type="checkbox" class="regexOption"/><label for="i3" class="i">◉</label>
-            <input id="m3" name="m" type="checkbox" class="regexOption"/><label for="m3" class="m">◉</label>
-            <input id="u3" name="u" type="checkbox" class="regexOption"/><label for="u3" class="u">◉</label>
+              <span class="linker">&#x26d3;</span>
+              <input id="g3" name="g" type="checkbox" class="regexOption"/><label for="g3" class="g">◉</label>
+              <input id="i3" name="i" type="checkbox" class="regexOption"/><label for="i3" class="i">◉</label>
+              <input id="m3" name="m" type="checkbox" class="regexOption"/><label for="m3" class="m">◉</label>
+              <!-- <input id="u3" name="u" type="checkbox" class="regexOption"/><label for="u3" class="u">◉</label> -->
+            </div>
+            <input id="regexInput3" class="regexInput flex-containee-large left-margin"/>
+            
           </div>
-          <input id="regexInput3" class="regexInput flex-containee-large left-margin"/>
-          
+          <code id="regexError3"></code>
         </div>
-        <code id="regexError3"></code>
+
+        <div class="delegator flex-container">
+          <span id="newRegex" class="">✚</span>
+          <span id="runLive"  class="left-margin">🗲</span>
+          <span id="execute"  class="left-margin">►</span>
+        </div>
+
+        <h3 class="fat-header bottom-shadow"> Raw Log Input </h3>
+
+        <div class="left-margin-major">
+          <textarea id="rawBox" class="dejaVu" rows="4"></textarea>          
+        </div>
+
+        <h3 class="fat-header bottom-shadow"> Scraped Output </h3>
+        <div class="left-margin-major">
+          <textarea id="scrapeBox" class="dejaVu"></textarea>
+          <button id="copyBtn" class="tertiary-button">Copy</button>
+        </div>
+
+        <h3 class="fat-header bottom-shadow">Tree View</h3>
+        <div class="left-margin-major header-button-container">
+          <button id="newWindow" disabled="disabled" class="tertiary-button">expand in new window</button>
         </div>
         
-        
-        <span id="newRegex" >✚</span>
-        <span id="runLive"  >🗲</span>
-        <span id="execute"  >►</span>
-        <h3> Raw Log Input </h3>
-        <textarea id="rawBox" rows="4"></textarea>
-
-        <h3> Scraped Output </h3>
-        <textarea id="scrapeBox"></textarea>
-        <button id="copyBtn">Copy</button>
-
-        <h3>Tree View</h3>
-        <div id="treeView">
-          <div id="treeRoot">
+        <!-- <div class="left-margin-major"> -->
+          <div id="treeView">
+            <div id="treeRoot" class="left-margin-major">
+            </div>
           </div>
-        </div>
-        <button id="newWindow">expand in new window</button>
 
         <script>
           // You can also require other files to run in this process
@@ -194,5 +206,5 @@
     <script>
       require('./renderer-processes/nav');
     </script>
-</body>
+  </body>
 </html>

@@ -32,13 +32,8 @@ Apache License, Version 2.0  */
     font-size: 64px;
 }
 
-textArea {
-    color: white;
-    /* SkyBlue4 */
-    background-color: #000;
-}
-
-textArea::selection {
+input::selection, textArea::selection {
+    /* I think this is orange */
   background: #ffb7b7;
 }
 
@@ -46,11 +41,64 @@ textArea::scrollbar {
     background-color: black;
 }
 
-button {
-    /* dark orange */
-    color: #be5e00;
-    background-color: navy;
+/* Ex: copy button */
+.tertiary-button {
+    color: rgb(80, 80, 80);
+    box-shadow:
+    0px 1px #e6ffff inset,
+    0px 3px 0px #999;
+    background: #d5eeee linear-gradient(to bottom, #fff 5%, rgb(200, 200, 200) 100%) repeat scroll 0% 0%;
+    border: none;
+    border-radius: 2px;
+    min-width: 4em;
+    font: 14pt;
 }
+
+/* section *:hover,  */
+.tertiary-button:hover,
+.delegator span:hover,
+.delegator label:hover {
+    background: white;
+    color: rgb(50, 50, 50);
+    box-shadow:
+    2px 3px 16px 0px rgba(255,255,255,0.5),
+    -2px -3px 16px 0px rgba(255,255,255,0.5),
+    0px 3px 0px #999;
+}
+
+.tertiary-button[disabled='disabled'] {
+    box-shadow: initial;
+    background: rgb(100, 100, 100);
+    color: rgb(200, 200, 200);
+}
+
+.fat-header {
+    /* Sky blue  */
+    background: #01b1d3;
+    border-bottom: 3px solid #0081b3;
+    width: 20em;
+    display: block;
+    padding:7px 10px;
+}
+
+.bottom-shadow {
+    box-shadow: 0px 2px 16px #000;
+}
+
+.header-button-container {
+    display: inline-block;
+}
+
+/* section *:active, */
+.tertiary-button:active,
+.delegator span:active,
+.delegator label:active {
+    background: #aaa;
+    color: rgb(240,240,240);
+    box-shadow: 0 1px #666;
+    transform: translateY(4px);
+}
+
 
 /* screen shake idea, but I'm unsure about the performance */
 /* from https://css-tricks.com/snippets/css/shake-css-keyframe-animation/ */
@@ -88,7 +136,7 @@ body {
     height: 100%;
     min-height: 100%;
     display: flex;
-    margin-left: 40px;
+    margin-left: 20px;
     margin-bottom: 20px;
 
     font-family: 'Open Sans Condensed', sans-serif;
@@ -114,11 +162,11 @@ body {
 
 .content {
     /* margin-left: 40px; */
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
     padding: 0;
     flex: 1;
     position: relative;
-    font-size:18px;
+    font-size:14pt;
     color: #e6ffff;
     padding:0;
     /* overflow: scroll; */
@@ -138,20 +186,25 @@ body {
     right: 0;
     bottom: 0;
     visibility:hidden;
-    overflow-x: scroll;
+    /* overflow-x: scroll; */
     overflow-y: scroll;
     transform: translate3d(0,0,0); /*for gpu compositing?*/
     pointer-events: none;
+    padding: 0px 20px 20px 20px;
+}
+
+.left-margin-major {
+    margin-left: 3em;
 }
 
 textarea {
     width: 90%;
     display: block;
     min-height: 100px;
-    margin-left: auto;
-    margin-right: auto;
     white-space:pre;
     overflow: scroll;
+    color: white;
+    background-color: #000;
 }
 
 .regexOption, .hide-checkbox{
@@ -232,16 +285,48 @@ textarea {
     margin-right: 0.5em;
 }
 
+/* regexInput and textInput are really the same though */
 .regexInput {
     display: inline;
     font-family: "DejaVu Sans Mono";
+    padding-right: 20px;
+    
+/* } */
+
+/* .textInput { */
+    border-radius: 3px;
+    border: 1px solid grey;
+    color: #aaa;
+    background-color: rgba(40,40,40,0.4);
+}
+
+.regexInput:hover {
+    border: 1px solid darkorange;
+}
+
+.regexInput:focus {
+    border: 1px solid #0f0;
+    background-color: rgba(0,40,0,0.4);
+    outline: none;
+}
+
+.regexInput.error {
+   border: 1px solid #f00;
+}
+
+.button:focus {
+    outline: none;
 }
 
 /* make this a class so naming is clear */
 
-.dejaVu {
+.dejaVuBold {
         font-size: 16px;
         font-family: "DejaVu Sans Mono Bold";
+}
+
+.dejaVu {
+    font-family: "DejaVu Sans Mono";
 }
 
 /* Tooltip CSS taken from https://www.w3schools.com/css/css_tooltip.asp */
