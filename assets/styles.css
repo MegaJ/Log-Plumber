@@ -66,7 +66,7 @@ textArea::scrollbar {
     0px 3px 0px #999;
 }
 
-.tertiary-button[disabled='disabled'] {
+.tertiary-button[disabled] {
     box-shadow: initial;
     background: rgb(100, 100, 100);
     color: rgb(200, 200, 200);
@@ -205,6 +205,7 @@ textarea {
     overflow: scroll;
     color: white;
     background-color: #000;
+    border-radius: 2px;
 }
 
 .regexOption, .hide-checkbox{
@@ -263,6 +264,27 @@ textarea {
 /*     display: inline-block; */
 /* } */
 
+/* 
+This sequence of level-delegator rules is to visually 
+indicate the linkage of levels.
+*/
+#level-delegator {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#level-delegator > div {
+    margin-top: 3px;
+    border-radius: 3px;
+    padding-left: 3px; 
+    padding-right: 3px;
+}
+
+#level-delegator > div.vertical-merge {
+    margin-top: initial;
+}
+
 .flex-container {
     width: 100%;
     display: inline-flex;
@@ -297,7 +319,7 @@ textarea {
     border-radius: 3px;
     border: 1px solid grey;
     color: #aaa;
-    background-color: rgba(40,40,40,0.4);
+    background-color: rgba(40,40,40,0.7);
 }
 
 .regexInput:hover {
@@ -306,7 +328,7 @@ textarea {
 
 .regexInput:focus {
     border: 1px solid #0f0;
-    background-color: rgba(0,40,0,0.4);
+    background-color: rgba(0,40,0,0.7);
     outline: none;
 }
 

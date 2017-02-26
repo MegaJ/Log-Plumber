@@ -274,7 +274,7 @@ function binarySearchForLeftLink(range, searchContext, left, right) {
   }
 
   if (comparisonResult === 1) {
-    throw new Exception("binary search failure");
+    throw new Error("binary search failure");
   }
 }
 
@@ -293,7 +293,7 @@ function binarySearchForRightLink(range, searchContext, left, right) {
   }
 
   if (comparisonResult === -1) {
-    throw new Exception("binary search failure");
+    throw new Error("binary search failure");
   }
 }
 
@@ -414,10 +414,28 @@ function makeTreeView() {
   function flushAttach(DOMTargetParent, DOMTarget) {
     window.requestAnimationFrame(() => {
       DOMTargetParent.replaceChild(fragment, DOMTarget);
+
+      var windowBtn = document.querySelector("#newWindow");
+      toggleDisableOnButton(windowBtn, true);
     });
   }
 
   return treeView;
+}
+
+function toggleDisableOnButton(selection, flag) {
+  var newWindowBtn = typeof selection === "string" ? document.querySelector(selection) : selection;
+  
+  if (!(newWindowBtn instanceof Node)) {
+    throw new Error("First argument must be a selector or a Node object.");
+  }
+
+  if (flag === undefined) {
+    newWindowBtn.disabled = newWindowBtn.disabled ? false : true;
+    return;
+  } 
+
+  newWindowBtn.disabled = !flag;
 }
 
 
