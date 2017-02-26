@@ -49,25 +49,25 @@ const regexpRecords = [
     //syslogd
     //regexp: /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
      regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
-    opts: "",
+    opts: "u",
     scopeChildren: true
   },
 
   {
     regexp: / HIT: ([\s\S]*)/,
-    opts: "",
+    opts: "u",
     scopeChildren: false
   },
 
   {
     regexp:  /\((.*)\) *[:|-]/,
-    opts: "",
+    opts: "u",
     scopeChildren: false
   },
 
   {
     regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
-    opts: "",
+    opts: "u",
     scopeChildren: false
   }
 ]

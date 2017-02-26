@@ -44,6 +44,11 @@
     <main class="content">
       <section id="section.scrape" class="section">
         <h3 class="fat-header bottom-shadow">The Plumber's Ledger</h3>
+        <div class="button-row flex-container">
+          <button id="ledgerChooseFile" class="tertiary-button">Load From JSON</button>
+          <button id="ledgerSave" class="tertiary-button">Save As JSON...</button>
+          <button id="ledgerDirectory" class="tertiary-button">Change directory</button>
+        </div>
         <div id="level-delegator" class="delegator">
           <div class="flex-container">
             <span class="dejaVuBold removeRegex pointer"><em>▬</em></span>
@@ -157,13 +162,22 @@
         <h3 class="fat-header bottom-shadow"> Raw Log Input </h3>
 
         <div class="left-margin-major">
-          <textarea id="rawBox" class="dejaVu" rows="4"></textarea>          
+          <div class="button-row flex-container">
+            <button id="rawBoxChooseFile" class="tertiary-button">Choose file...</button>
+            <button id="rawBoxWatchFile" class="tertiary-button">Watch file...</button>
+            <button id="rawBoxSettings" class="tertiary-button">Change Settings...</button>
+          </div>
+          <textarea id="rawBox" class="dejaVu" rows="4" placeholder="Paste some text here"></textarea>          
         </div>
 
         <h3 class="fat-header bottom-shadow"> Scraped Output </h3>
         <div class="left-margin-major">
-          <textarea id="scrapeBox" class="dejaVu"></textarea>
-          <button id="copyBtn" class="tertiary-button">Copy</button>
+          <div class="button-row flex-container">
+            <button id="copyBtn" class="tertiary-button">Copy</button>
+            <button id="saveScrapeBox" class="tertiary-button">Save As...</button>
+            <button id="scrapeBoxSettings" class="tertiary-button">Change Settings...</button>
+          </div>
+          <textarea id="scrapeBox" class="dejaVu" placeholder="This text box gets automatically filled when your regular expressions match the input text"></textarea>
         </div>
 
         <h3 class="fat-header bottom-shadow">Tree View</h3>
