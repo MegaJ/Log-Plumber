@@ -217,21 +217,8 @@ function initializeOtherListeners () {
     if (sel.rangeCount > 0) {
       // If delegator contains the link text, wait for the selection to finalize on a keyup or a mouseup?
       if(delegator.contains(sel.anchorNode)) {
-        
-        // var selectionStartInInputBox = false;
-        // var currChild = sel.anchorNode;
-        // while(currChild !== delegator) {
-        //   if (/regexInput[0-9]+/.test(currChild.id)) {
-        //     selectionStartInInputBox = true;
-        //   }
-
-        //   currChild = currChild.parentElement;
-        // }
-
-        // if (!selectionStartInInputBox) {
           document.removeEventListener("selectionchange", textSelectionListener);
           document.addEventListener("mouseup", mouseupListener, {once: true, passive: true});
-        // }
       }
     }
   }
@@ -403,10 +390,13 @@ function asyncFilter(evt, regexpRecords, text) {
   const DOMTargetParent = document.getElementById("treeView");
   const DOMTarget = DOMTargetParent.firstElementChild;
 
+  // For link levels feature
+  let resultBuffer = [];
+  let resultBufferIndex = null;
+
   /** TODO: Have to save state between scrapeBoxFiller calls,
       I can do that here so the variables will be within closure
    **/
-
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
     let matches = [];
@@ -434,9 +424,6 @@ function asyncFilter(evt, regexpRecords, text) {
       return;
     }
     
-    let resultBuffer = [];
-    let previousPassResultBufferIndex = -1;
-    let resultBufferIndex = null;
     // Do actual regex matching to tokenize text
     for(let i = 0; i < matchesPerBatch; i++) {
       let matchedString = topLevelRegexp.exec(text);
@@ -449,7 +436,6 @@ function asyncFilter(evt, regexpRecords, text) {
 
       let currLevel = 1; // 0 level is the top level regex
 
-      // May need to remember these outside of this loop
       let lastLevelBeforeLinkStart;
 
       // TODO: This loop is now more complex than I am comfortable with.
@@ -487,8 +473,6 @@ function asyncFilter(evt, regexpRecords, text) {
           orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
         }
 
-        // Why am I struggling here? offset
-        // save result in a buffer
         if (currMatch && Number.isInteger(lastLevelBeforeLinkStart)) {
           let currOffset = currLevel - (lastLevelBeforeLinkStart + 1);
           resultBuffer[currOffset] = currMatch[currMatch.length - 1];
@@ -504,13 +488,15 @@ function asyncFilter(evt, regexpRecords, text) {
 
 
         let endLevel = linkLevels[lastLevelBeforeLinkStart + 1];
-        let linkLength = endLevel - lastLevelBeforeLinkStart;
-        // Suspect: need to loop through only a continguous subportion of the resultBuffer.
+        // Loop through only a continguous subportion of the resultBuffer.
         // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
         if (currLevel === endLevel) {
           let shouldFlush = currMatch && Number.isInteger(resultBufferIndex);
           if (shouldFlush) {
-            for (let k = resultBufferIndex; k < resultBufferIndex + linkLength; k++) {
+            // TODO: I never figured out why resultBufferIndex + linkLength can exceed resultBuffer.length, but for the time being, this Math.min seems to work 
+            let linkLength = endLevel - lastLevelBeforeLinkStart;
+            let runLength = Math.min(resultBuffer.length, linkLength);
+            for (let k = resultBufferIndex; k < runLength; k++) {
               treeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
               orgModeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
             }
@@ -522,10 +508,7 @@ function asyncFilter(evt, regexpRecords, text) {
           traversingInLinkedState = false; // TODO: use this instead of lastLevelBeforeLinkStart
         }
       }
-      previousPassResultBufferIndex = resultBufferIndex;
     }
-
-    
 
     // to give impression of responsiveness, render a small portion
     if(renderFirstBatch) {
