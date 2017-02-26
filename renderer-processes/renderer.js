@@ -17,7 +17,8 @@ const copyBtn = document.getElementById('copyBtn');
 const regexInputsArray = document.querySelectorAll('input[id^=regexInput]');
 const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]'); // Each element is a nodelist of /gim input elements
 const regexErrorsArray = document.querySelectorAll('code[id^=regexError]');
-const delegator = document.querySelector('#section\\.scrape div.delegator');
+const delegator = document.querySelector('#level-delegator');
+const linkSpans = document.querySelectorAll('.linker'); 
 
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
@@ -72,7 +73,7 @@ const regexpRecords = [
 ]
 
 // Level 2 goes to level 3
-var linkLevels = {};
+var linkLevels = new Map();
 
 function startUp () {
 
@@ -204,8 +205,21 @@ function initializeOtherListeners () {
     var linkExtent = binarySearchForLinkExtent(range, searchContext, 0, searchContext.length - 1);
 
     if (linkExtent) {
-      linkLevels[linkExtent["left"]] = linkExtent["right"];
-      window.getSelection().removeAllRanges(); // remove ranges when we actually selected over linker spans
+      let fromLevel = linkExtent["left"]; let toLevel = linkExtent["right"];
+
+      requestAnimationFrame(function () {
+        // remove ranges when we actually selected over linker spans
+        window.getSelection().removeAllRanges();
+        
+        if (linkLevels.has(fromLevel) && linkLevels.get(fromLevel) === toLevel) {
+          unhighlightLinkExtent(fromLevel, toLevel);
+          linkLevels.delete(fromLevel);
+          return;
+        }
+      
+        linkLevels.set(fromLevel, toLevel);
+        highlightLinkExtent(fromLevel, toLevel)
+      });
     }
     
     document.addEventListener("selectionchange", textSelectionListener);
@@ -281,6 +295,41 @@ function binarySearchForRightLink(range, searchContext, left, right) {
   if (comparisonResult === -1) {
     throw new Exception("binary search failure");
   }
+}
+
+function highlightLinkExtent(fromLevel, toLevel) {
+  const parentSelector = "div.flex-container";
+  const colorStringForLinkage = getRandomColor();
+  // top one shouldn't have verticl merge
+  linkSpans[fromLevel].closest(parentSelector).style["background"] = colorStringForLinkage;
+  for(var i = fromLevel + 1; i <= toLevel; i++) {
+    let targetDiv = linkSpans[i].closest(parentSelector);
+    targetDiv.classList.add("vertical-merge");
+    targetDiv.style["background"] = colorStringForLinkage;
+  }
+}
+
+function unhighlightLinkExtent(fromLevel, toLevel) {
+  const parentSelector = "div.flex-container";
+  
+  linkSpans[fromLevel].closest(parentSelector).style["background"] = null;
+  for(var i = fromLevel + 1; i <= toLevel; i++) {
+    let targetDiv = linkSpans[i].closest(parentSelector);
+    targetDiv.classList.remove("vertical-merge");
+    targetDiv.style["background"] = null;
+  }
+}
+
+/** 
+    http://stackoverflow.com/questions/1535128/apply-random-color-to-class-elements-individually
+**/
+function getRandomColor(opacity = 0.8) {
+  var hue = 'rgba(' +
+      (Math.floor((256-199)*Math.random()) + 200) + ',' +
+      (Math.floor((256-199)*Math.random()) + 200) + ',' +
+      (Math.floor((256-199)*Math.random()) + 200) + ',' +
+      opacity + ')';
+  return hue;
 }
 
 function makeOrgModeView() {
@@ -455,7 +504,7 @@ function asyncFilter(evt, regexpRecords, text) {
           textScope = currMatch[currMatch.length - 1];
         }
 
-        let beginLink = linkLevels[currLevel];
+        let beginLink = linkLevels.get(currLevel);
         if (beginLink) {
           lastLevelBeforeLinkStart = currLevel - 1;
         }
@@ -487,7 +536,7 @@ function asyncFilter(evt, regexpRecords, text) {
         }
 
 
-        let endLevel = linkLevels[lastLevelBeforeLinkStart + 1];
+        let endLevel = linkLevels.get(lastLevelBeforeLinkStart + 1);
         // Loop through only a continguous subportion of the resultBuffer.
         // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
         if (currLevel === endLevel) {
