@@ -36,6 +36,32 @@ function makeRegexRecord (regexp, regexpOpts, scopeChildren) {
   }
 }
 
+function makeDOMRegexp (number) {
+  const parser = new DOMParser();
+  const DOMRegexpTemplate =
+  `<div class="flex-container">
+            <span class="dejaVuBold removeRegex pointer">▬</span>
+            
+            <div id="regexOptions2" class="flex-containee-small dejaVuBold left-margin">
+              <input id="scopeChildren2" name="scopeChildren2" type="checkbox" class="hide-checkbox scopeChildren"><label for="scopeChildren2">
+                <span class="scopeChildren">🔬</span>
+              </label>
+              <span class="linker">⛓</span>
+              <input id="g2" name="g" type="checkbox" class="regexOption"><label for="g2" class="g">◉</label>
+              <input id="i2" name="i" type="checkbox" class="regexOption"><label for="i2" class="i">◉</label>
+              <input id="m2" name="m" type="checkbox" class="regexOption"><label for="m2" class="m">◉</label>
+            </div>
+            <input id="regexInput2" class="regexInput flex-containee-large left-margin">
+    </div>`
+
+  const DOMRegexp = DOMRegexpTemplate.replace(/2/g, number);
+  const templateFragment = document.createDocumentFragment();
+  const builtHTML = parser.parseFromString(DOMRegexp, 'text/html').body.childNodes[0];
+  
+  templateFragment.appendChild(builtHTML);
+  return templateFragment;
+}
+
 /** These records are hooked up to listeners that update these records
     on DOM changes to regexInput*, regexOptions*, and linker elements
     Regex Options are never displayed as a string in the UI
@@ -100,9 +126,10 @@ function startUp () {
   }, {passive: true}));
 
   function delegationMakerHelper(listenerCallback) {
+    const validTargets = {"INPUT": true, "SPAN": true}
     return function (evt) {
       let currentElement = evt.target;
-      while(currentElement.tagName !== "INPUT" && currentElement.classList[0] !== "delegator") {
+      while(!(currentElement.tagName in validTargets) && currentElement.classList[0] !== "delegator") {
         currentElement = currentElement.parentElement;
       }
 
@@ -181,106 +208,30 @@ function startUp () {
         // hard code to start from the top, won't have to if I implement diffing
         setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
       });
-    }
-    
-  }
-  
-  // TODO: Need to make sure the linkLevels map is correct
-  // TODO: swap regexpRecords, not just in DOM
-  // TODO: swap linkSpans
-  function regexpRecordSwap(keyDownOrPressEvent) {
-    if (!keyDownOrPressEvent.altKey) return false;
-    if (keyDownOrPressEvent.keyCode !== 38 && keyDownOrPressEvent.keyCode !== 40) return false;
-    
-    var regexpRecordInput = keyDownOrPressEvent.target;
-    var regexpRecordContainer = regexpRecordInput.closest("div.flex-container");
-
-    let sibling = null;
-    let filter = (element) => {
-      return element.tagName === "DIV" && element.classList.contains("flex-container");
-    };
-
-    let [ , stringID] = regexpRecordInput.id.match(/regexInput([0-9]+)/);
-    let thisID = parseInt(stringID);
-    let thisPosition = idPositionMap.get(thisID);
-    let otherID = null;
-    let otherPosition = null;
-    
-    // Up
-    if (keyDownOrPressEvent.keyCode === 38) {
-      sibling = findSibling(regexpRecordContainer, filter, false);
-      otherID = positionIDMap.get(thisPosition - 1);
-    }
-
-    // Down
-    if (keyDownOrPressEvent.keyCode === 40) {
-      sibling = findSibling(regexpRecordContainer, filter, true);
-      otherID = positionIDMap.get(thisPosition + 1);
-    }
-
-    if (sibling !== null) {
-      // I actually want to be able to get the id from the position. This prevents me from doing this:
-      //let otherStringPosition = sibling.querySelector(".regexInput").id.match(/regexInput([0-9]+)/)[1];
-      //otherPosition = idPositionMap.get(parseInt(otherStringPosition));
-      otherPosition = idPositionMap.get(otherID);
-      
-      swapElements(sibling, regexpRecordContainer);
-      mapSwap(positionIDMap, thisPosition, otherPosition)
-      mapSwap(idPositionMap, thisID, otherID);
-      swap(regexpRecords, thisPosition, otherPosition);
-      // linkSpans is allowed to swap since we access them positionally with a fromLevel to a toLevel.
-      swap(linkSpans, thisPosition, otherPosition);
-      swap(regexInputsArray, thisPosition, otherPosition);
-      // swap(regexErrorsDisplayArray, thisPosition, otherPosition);
-      // TODO: if there is an error state, swap the errors and change the ids
-    }
-
-    regexpRecordInput.focus();
-  }
-
-  function findSibling(element, filter, forward = true) {
-    var method = forward ? "nextElementSibling" : "previousElementSibling";
-    var currElement = element[method];
-    while(currElement !== null) {
-      if (!filter || filter(currElement)) {
-        break;
-      }
-      currElement = currElement[method];
-    }
-    
-    return currElement;
-  }
-
-  // http://stackoverflow.com/questions/10716986/swap-2-html-elements-and-preserve-event-listeners-on-them
-  function swapElements(obj1, obj2) {
-    // save the location of obj2
-    var parent2 = obj2.parentNode;
-    var next2 = obj2.nextSibling;
-    // special case for obj1 is the next sibling of obj2
-    if (next2 === obj1) {
-      // just put obj1 before obj2
-      parent2.insertBefore(obj1, obj2);
-    } else {
-      // insert obj2 right before obj1
-      obj1.parentNode.insertBefore(obj2, obj1);
-
-      // now insert obj1 where obj2 was
-      if (next2) {
-        // if there was an element after obj2, then insert obj1 right before that
-        parent2.insertBefore(obj1, next2);
-      } else {
-        // otherwise, just append as last child
-        parent2.appendChild(obj1);
-      }
-    }
+    } 
   }
   
   delegator.addEventListener('input', delegationMakerHelper(onRegexInputListener), {capture: true, passive: true});
   delegator.addEventListener('change', delegationMakerHelper(onOptionsChangeListener), {capture: true, passive: true});
   delegator.addEventListener('keydown', delegationMakerHelper(regexpRecordSwap));
   delegator.addEventListener('keypress', delegationMakerHelper(regexpRecordSwap));
-  // click for removal
 
+  delegator.addEventListener('click', delegationMakerHelper(removeRegexp));
+
+  function removeRegexp(clickEvent) {
+    let span = clickEvent.target;
+    if (span.tagName !== "SPAN" || !span.classList.contains("removeRegex")) return false;
+
+    let regexpTarget = span.closest("div.flex-container");
+    regexpTarget.parentElement.removeChild(regexpTarget);
+  }
+
+  document.querySelector("#newRegex").addEventListener('click', addRegexp, {passive: true});
+  function addRegexp(clickEvent) {
+    const totalRegexps = regexpRecords.length;
+    const newDOMRegexp = makeDOMRegexp(totalRegexps + 1);
+    document.querySelector("#level-delegator").appendChild(newDOMRegexp);
+  }
   // adding
 
   copyBtn.addEventListener('click', (evt) => {
@@ -352,6 +303,75 @@ function initializeOtherListeners () {
   document.addEventListener("selectionchange", textSelectionListener, {passive: true});
 }
 
+
+// TODO: Need to make sure the linkLevels map is correct
+// TODO: swap regexpRecords, not just in DOM
+// TODO: swap linkSpans
+function regexpRecordSwap(keyDownOrPressEvent) {
+  if (!keyDownOrPressEvent.altKey) return false;
+  if (keyDownOrPressEvent.keyCode !== 38 && keyDownOrPressEvent.keyCode !== 40) return false;
+  
+  var regexpRecordInput = keyDownOrPressEvent.target;
+  var regexpRecordContainer = regexpRecordInput.closest("div.flex-container");
+
+  let sibling = null;
+  let filter = (element) => {
+    return element.tagName === "DIV" && element.classList.contains("flex-container");
+  };
+
+  let [ , stringID] = regexpRecordInput.id.match(/regexInput([0-9]+)/);
+  let thisID = parseInt(stringID);
+  let thisPosition = idPositionMap.get(thisID);
+  let otherID = null;
+  let otherPosition = null;
+  
+  // Up
+  if (keyDownOrPressEvent.keyCode === 38) {
+    sibling = findSibling(regexpRecordContainer, filter, false);
+    otherID = positionIDMap.get(thisPosition - 1);
+  }
+
+  // Down
+  if (keyDownOrPressEvent.keyCode === 40) {
+    sibling = findSibling(regexpRecordContainer, filter, true);
+    otherID = positionIDMap.get(thisPosition + 1);
+  }
+
+  if (sibling !== null) {
+    // I actually want to be able to get the id from the position. This prevents me from doing this:
+    //let otherStringPosition = sibling.querySelector(".regexInput").id.match(/regexInput([0-9]+)/)[1];
+    //otherPosition = idPositionMap.get(parseInt(otherStringPosition));
+    otherPosition = idPositionMap.get(otherID);
+    
+    swapElements(sibling, regexpRecordContainer);
+    mapSwap(positionIDMap, thisPosition, otherPosition)
+    mapSwap(idPositionMap, thisID, otherID);
+    swap(regexpRecords, thisPosition, otherPosition);
+    // linkSpans is allowed to swap since we access them positionally with a fromLevel to a toLevel.
+    swap(linkSpans, thisPosition, otherPosition);
+    swap(regexInputsArray, thisPosition, otherPosition);
+    // swap(regexErrorsDisplayArray, thisPosition, otherPosition);
+    // TODO: if there is an error state, swap the errors and change the ids
+  }
+
+  regexpRecordInput.focus();
+}
+
+
+
+function findSibling(element, filter, forward = true) {
+  var method = forward ? "nextElementSibling" : "previousElementSibling";
+  var currElement = element[method];
+  while(currElement !== null) {
+    if (!filter || filter(currElement)) {
+      break;
+    }
+    currElement = currElement[method];
+  }
+  
+  return currElement;
+}
+
 var idPositionMap = new Map();
 var positionIDMap = new Map();
 for(let i = 0; i < regexpRecords.length; i++) {
@@ -381,6 +401,30 @@ function mapSwap(map, keyA, keyB) {
   var tempA = map.get(keyA);
   map.set(keyA, map.get(keyB));
   map.set(keyB, tempA);
+}
+
+// http://stackoverflow.com/questions/10716986/swap-2-html-elements-and-preserve-event-listeners-on-them
+function swapElements(obj1, obj2) {
+  // save the location of obj2
+  var parent2 = obj2.parentNode;
+  var next2 = obj2.nextSibling;
+  // special case for obj1 is the next sibling of obj2
+  if (next2 === obj1) {
+    // just put obj1 before obj2
+    parent2.insertBefore(obj1, obj2);
+  } else {
+    // insert obj2 right before obj1
+    obj1.parentNode.insertBefore(obj2, obj1);
+
+    // now insert obj1 where obj2 was
+    if (next2) {
+      // if there was an element after obj2, then insert obj1 right before that
+      parent2.insertBefore(obj1, next2);
+    } else {
+      // otherwise, just append as last child
+      parent2.appendChild(obj1);
+    }
+  }
 }
 
 // CONSIDER: range.comparePoint will incorrectly return 1
@@ -468,22 +512,6 @@ function highlightLinkExtent(fromLevel, toLevel) {
     targetDiv.style["background"] = colorStringForLinkage;
   }
 }
-
-// function highlightLinkExtent(fromLevel, toLevel) {
-//   const parentSelector = "div.flex-container";
-//   const colorStringForLinkage = getRandomColor();
-
-//   const spanStartPosition = idPositionMap.get(parseInt(fromLevel));
-//   const spanEndPosition = idPositionMap.get(parseInt(toLevel));
-  
-//   // top one shouldn't have verticl merge
-//   linkSpans[spanStartPosition].closest(parentSelector).style["background"] = colorStringForLinkage;
-//   for(var i = spanStartPosition + 1; i <= spanEndPosition; i++) {
-//     let targetDiv = linkSpans[i].closest(parentSelector);
-//     targetDiv.classList.add("vertical-merge");
-//     targetDiv.style["background"] = colorStringForLinkage;
-//   }
-// }
 
 function unhighlightLinkExtent(fromLevel, toLevel) {
   const parentSelector = "div.flex-container";
