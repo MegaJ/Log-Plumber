@@ -14,11 +14,11 @@ const rAF = window.requestAnimationFrame;
 const rawBox = idIt('rawBox');
 const scrapeBox = idIt('scrapeBox');
 const copyBtn = document.getElementById('copyBtn');
-const regexInputsArray = document.querySelectorAll('input[id^=regexInput]');
+const regexInputsArray = nodelistToArray(document.querySelectorAll('input[id^=regexInput]'));
 const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]'); // Each element is a nodelist of /gim input elements
 const regexErrorsArray = document.querySelectorAll('code[id^=regexError]');
 const delegator = document.querySelector('#level-delegator');
-const linkSpans = document.querySelectorAll('.linker'); 
+const linkSpans = nodelistToArray(document.querySelectorAll('.linker'));
 
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
@@ -118,16 +118,19 @@ function startUp () {
     if (match) {
       // TODO: stop asyncFilter with some sort of flag here
       let numSuffix = match[1];
-      let currRecord = regexpRecords[numSuffix];
-      let newRegexString = regexInputsArray[numSuffix].value;
+      let numSuffixPosition = idPositionMap.get(parseInt(numSuffix));
+      let currRecord = regexpRecords[numSuffixPosition];
+      let newRegexString = regexInputsArray[numSuffixPosition].value;
 
       // Attempt to use the regex, which may be invalid
       try {
         let newRegexp = new RegExp(newRegexString, currRecord.opts);
         currRecord.regexp = newRegexp;
+        regexErrorsArray;
         
         // Clear the previously displayed error if regex creation was successful
-        regexErrorsDisplayArray[numSuffix].nodeValue = ``;
+        
+        regexErrorsDisplayArray[numSuffixPosition].nodeValue = ``;
         console.log("new regex: ", newRegexp);
         // Need a sound to play when they previously had an error and cleared it.
 
@@ -138,7 +141,7 @@ function startUp () {
         });
       } catch(e) {
         sounds.error.resetPlay();
-        regexErrorsDisplayArray[numSuffix].nodeValue = `Error: ${e}`;
+        regexErrorsDisplayArray[numSuffixPosition].nodeValue = `Error: ${e}`;
         return;
       }
     }
@@ -181,8 +184,104 @@ function startUp () {
     }
     
   }
+  
+  // TODO: Need to make sure the linkLevels map is correct
+  // TODO: swap regexpRecords, not just in DOM
+  // TODO: swap linkSpans
+  function regexpRecordSwap(keyDownOrPressEvent) {
+    if (!keyDownOrPressEvent.altKey) return false;
+    if (keyDownOrPressEvent.keyCode !== 38 && keyDownOrPressEvent.keyCode !== 40) return false;
+    
+    var regexpRecordInput = keyDownOrPressEvent.target;
+    var regexpRecordContainer = regexpRecordInput.closest("div.flex-container");
+
+    let sibling = null;
+    let filter = (element) => {
+      return element.tagName === "DIV" && element.classList.contains("flex-container");
+    };
+
+    let [ , stringID] = regexpRecordInput.id.match(/regexInput([0-9]+)/);
+    let thisID = parseInt(stringID);
+    let thisPosition = idPositionMap.get(thisID);
+    let otherID = null;
+    let otherPosition = null;
+    
+    // Up
+    if (keyDownOrPressEvent.keyCode === 38) {
+      sibling = findSibling(regexpRecordContainer, filter, false);
+      otherID = positionIDMap.get(thisPosition - 1);
+    }
+
+    // Down
+    if (keyDownOrPressEvent.keyCode === 40) {
+      sibling = findSibling(regexpRecordContainer, filter, true);
+      otherID = positionIDMap.get(thisPosition + 1);
+    }
+
+    if (sibling !== null) {
+      // I actually want to be able to get the id from the position. This prevents me from doing this:
+      //let otherStringPosition = sibling.querySelector(".regexInput").id.match(/regexInput([0-9]+)/)[1];
+      //otherPosition = idPositionMap.get(parseInt(otherStringPosition));
+      otherPosition = idPositionMap.get(otherID);
+      
+      swapElements(sibling, regexpRecordContainer);
+      mapSwap(positionIDMap, thisPosition, otherPosition)
+      mapSwap(idPositionMap, thisID, otherID);
+      swap(regexpRecords, thisPosition, otherPosition);
+      // linkSpans is allowed to swap since we access them positionally with a fromLevel to a toLevel.
+      swap(linkSpans, thisPosition, otherPosition);
+      swap(regexInputsArray, thisPosition, otherPosition);
+      // swap(regexErrorsDisplayArray, thisPosition, otherPosition);
+      // TODO: if there is an error state, swap the errors and change the ids
+    }
+
+    regexpRecordInput.focus();
+  }
+
+  function findSibling(element, filter, forward = true) {
+    var method = forward ? "nextElementSibling" : "previousElementSibling";
+    var currElement = element[method];
+    while(currElement !== null) {
+      if (!filter || filter(currElement)) {
+        break;
+      }
+      currElement = currElement[method];
+    }
+    
+    return currElement;
+  }
+
+  // http://stackoverflow.com/questions/10716986/swap-2-html-elements-and-preserve-event-listeners-on-them
+  function swapElements(obj1, obj2) {
+    // save the location of obj2
+    var parent2 = obj2.parentNode;
+    var next2 = obj2.nextSibling;
+    // special case for obj1 is the next sibling of obj2
+    if (next2 === obj1) {
+      // just put obj1 before obj2
+      parent2.insertBefore(obj1, obj2);
+    } else {
+      // insert obj2 right before obj1
+      obj1.parentNode.insertBefore(obj2, obj1);
+
+      // now insert obj1 where obj2 was
+      if (next2) {
+        // if there was an element after obj2, then insert obj1 right before that
+        parent2.insertBefore(obj1, next2);
+      } else {
+        // otherwise, just append as last child
+        parent2.appendChild(obj1);
+      }
+    }
+  }
+  
   delegator.addEventListener('input', delegationMakerHelper(onRegexInputListener), {capture: true, passive: true});
   delegator.addEventListener('change', delegationMakerHelper(onOptionsChangeListener), {capture: true, passive: true});
+  delegator.addEventListener('keydown', delegationMakerHelper(regexpRecordSwap));
+  delegator.addEventListener('keypress', delegationMakerHelper(regexpRecordSwap));
+  // click for removal
+
+  // adding
 
   copyBtn.addEventListener('click', (evt) => {
     let scrapedText = scrapeBox.value;
@@ -209,11 +308,12 @@ function initializeOtherListeners () {
     // Find out which link nodes have been selected by the selection
     let range = window.getSelection().getRangeAt(0);
     let searchContext = document.querySelectorAll(".linker");
+    let ancestorSelector = "div.flex-container";
     if (!range.startContainer.tagName) {
-      range.setStart(range.startContainer.parentElement, 0);
+      range.setStart(range.startContainer.parentElement.closest(ancestorSelector), 0);
     }
     if (!range.endContainer.tagName) {
-      range.setEnd(range.endContainer.parentElement, 0);
+      range.setEnd(range.endContainer.parentElement.closest(ancestorSelector), 0);
     }
     var linkExtent = binarySearchForLinkExtent(range, searchContext, 0, searchContext.length - 1);
 
@@ -252,12 +352,49 @@ function initializeOtherListeners () {
   document.addEventListener("selectionchange", textSelectionListener, {passive: true});
 }
 
+var idPositionMap = new Map();
+var positionIDMap = new Map();
+for(let i = 0; i < regexpRecords.length; i++) {
+  idPositionMap.set(i, i);
+  positionIDMap.set(i, i);
+}
+
+
+// http://stackoverflow.com/questions/3199588/fastest-way-to-convert-javascript-nodelist-to-array
+function nodelistToArray(nodelist) {
+  var arr = [];
+  for (var i = 0, ref = arr.length = nodelist.length; i < ref; i++) {
+    arr[i] = nodelist[i];
+  }
+  return arr;
+}
+
+function swap(collection, keyA, keyB) {
+  var a = collection[keyA];
+  collection[keyA] = collection[keyB];
+  collection[keyB] = a;
+  //    [collection[keyA], collection[keyB]] = [collection[keyB], collection[keyA]];
+  return collection;
+}
+
+function mapSwap(map, keyA, keyB) {
+  var tempA = map.get(keyA);
+  map.set(keyA, map.get(keyB));
+  map.set(keyB, tempA);
+}
+
+// CONSIDER: range.comparePoint will incorrectly return 1
+// even when the element in question is a child of range.endContainer
+// There is no documentation I could find of the endContainer being exclusive, not inclusive
 function binarySearchForLinkExtent(range, searchContext, left, right) {
   if (left > right) return null;
 
   var mid = Math.floor(left + (right - left) / 2); // Attempt to prevent integer overflow
   var midElement = searchContext[mid];
   var comparisonResult = range.comparePoint(midElement, 0);
+  if (comparisonResult === 1) {
+    comparisonResult = range.endContainer.contains(midElement) ? 0 : comparisonResult;
+  }
 
   if (comparisonResult === 0) {
     // phase 2, found an item in the range
@@ -278,6 +415,9 @@ function binarySearchForLeftLink(range, searchContext, left, right) {
   var mid = Math.floor(left + (right - left) / 2); // Attempt to prevent integer overflow
   var midElement = searchContext[mid];
   var comparisonResult = range.comparePoint(midElement, 0);
+  if (comparisonResult === 1) {
+    comparisonResult = range.endContainer.contains(midElement) ? 0 : comparisonResult;
+  }
 
   // mid is still in the selection range
   if (comparisonResult === 0) {
@@ -297,6 +437,9 @@ function binarySearchForRightLink(range, searchContext, left, right) {
   var mid = Math.ceil(left + (right - left) / 2); // Attempt to prevent integer overflow
   var midElement = searchContext[mid];
   var comparisonResult = range.comparePoint(midElement, 0);
+  if (comparisonResult === 1) {
+    comparisonResult = range.endContainer.contains(midElement) ? 0 : comparisonResult;
+  }
 
   // mid is still in the selection range
   if (comparisonResult === 0) {
@@ -313,6 +456,10 @@ function binarySearchForRightLink(range, searchContext, left, right) {
 function highlightLinkExtent(fromLevel, toLevel) {
   const parentSelector = "div.flex-container";
   const colorStringForLinkage = getRandomColor();
+
+  // const spanStartPosition = idPositionMap.get(parseInt(fromLevel));
+  // const spanEndPosition = idPositionMap.get(parseInt(toLevel));
+  
   // top one shouldn't have verticl merge
   linkSpans[fromLevel].closest(parentSelector).style["background"] = colorStringForLinkage;
   for(var i = fromLevel + 1; i <= toLevel; i++) {
@@ -321,6 +468,22 @@ function highlightLinkExtent(fromLevel, toLevel) {
     targetDiv.style["background"] = colorStringForLinkage;
   }
 }
+
+// function highlightLinkExtent(fromLevel, toLevel) {
+//   const parentSelector = "div.flex-container";
+//   const colorStringForLinkage = getRandomColor();
+
+//   const spanStartPosition = idPositionMap.get(parseInt(fromLevel));
+//   const spanEndPosition = idPositionMap.get(parseInt(toLevel));
+  
+//   // top one shouldn't have verticl merge
+//   linkSpans[spanStartPosition].closest(parentSelector).style["background"] = colorStringForLinkage;
+//   for(var i = spanStartPosition + 1; i <= spanEndPosition; i++) {
+//     let targetDiv = linkSpans[i].closest(parentSelector);
+//     targetDiv.classList.add("vertical-merge");
+//     targetDiv.style["background"] = colorStringForLinkage;
+//   }
+// }
 
 function unhighlightLinkExtent(fromLevel, toLevel) {
   const parentSelector = "div.flex-container";
