@@ -15,10 +15,61 @@ const rawBox = idIt('rawBox');
 const scrapeBox = idIt('scrapeBox');
 const copyBtn = document.getElementById('copyBtn');
 const regexInputsArray = nodelistToArray(document.querySelectorAll('input[id^=regexInput]'));
-const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]'); // Each element is a nodelist of /gim input elements
-const regexErrorsArray = document.querySelectorAll('code[id^=regexError]');
+// Each element is a nodelist of /gim input elements
+// const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]'); 
+const regexErrorsArray = nodelistToArray(document.querySelectorAll('code[id^=regexError]'));
+const regexErrorsDisplayArray = [];
 const delegator = document.querySelector('#level-delegator');
 const linkSpans = nodelistToArray(document.querySelectorAll('.linker'));
+
+var produceFreshInt = (initialValue) => {
+  var freshInt = initialValue;
+  return () => {
+    return freshInt++;
+  }
+}
+
+
+// The whole point of this is want of a private variable
+// that can be accessed by produceFreshInt
+// var produceFreshInt;
+// var SingletonInt = function() {
+//   var freshIntSet;
+//   var resolveRef;
+//   var resolveProduce;
+//   this.setInt = (startInt) => {
+//     freshIntSet = startInt;
+//     resolveRef(freshIntSet);
+
+// This code is actually kinda funny...
+//     resolveProduce(produceFreshInt.then = function(cb) {
+//       cb(++freshIntSet);
+//       return produceFreshInt;
+//     });
+    
+//     this.setInt = null;
+//     SingletonInt = null;
+//     //singletonInt = null;
+//   };
+//   this.yieldInt = new Promise((resolve, reject) => {
+//     resolveRef = resolve;
+//   });
+
+//   produceFreshInt = new Promise((resolve, reject) => {
+//     resolveProduce = resolve;
+//   });
+// }
+// var singletonInt = new SingletonInt();
+
+// Generators are kind of like promises. They might be isomorphic.
+var produceFreshInt = idMaker();
+function* idMaker(initVal) {
+  var index = initVal;
+  if (!index) return;
+  while (true) {
+    yield index++;
+  }
+}
 
 //const BrowserWindow = require('electron').remote.BrowserWindow;
 //const webContents = BrowserWindow.webContents;
@@ -31,11 +82,12 @@ require('./sounds').then((promisedSounds) => {
 function makeRegexRecord (regexp, regexpOpts, scopeChildren) {
   return {
     regexp: regexp,
-    regexpOpts: regexOpt,
+    regexpOpts: regexpOpts,
     scopeChildren: scopeChildren
   }
 }
 
+// Could also modify the innerHTML for more speed instead of using DOMParser
 function makeDOMRegexp (number) {
   const parser = new DOMParser();
   const DOMRegexpTemplate =
@@ -51,14 +103,15 @@ function makeDOMRegexp (number) {
               <input id="i2" name="i" type="checkbox" class="regexOption"><label for="i2" class="i">◉</label>
               <input id="m2" name="m" type="checkbox" class="regexOption"><label for="m2" class="m">◉</label>
             </div>
-            <input id="regexInput2" class="regexInput flex-containee-large left-margin">
-    </div>`
+            <input id="regexInput2" class="regexInput flex-containee-large left-margin" placeholder="type a regular expression">
+    </div>
+    <code id="regexError2"></code>`
 
   const DOMRegexp = DOMRegexpTemplate.replace(/2/g, number);
   const templateFragment = document.createDocumentFragment();
-  const builtHTML = parser.parseFromString(DOMRegexp, 'text/html').body.childNodes[0];
-  
-  templateFragment.appendChild(builtHTML);
+  const htmlBody = parser.parseFromString(DOMRegexp, 'text/html').body;
+
+  while (htmlBody.hasChildNodes()) templateFragment.appendChild(htmlBody.firstChild);
   return templateFragment;
 }
 
@@ -107,12 +160,20 @@ function startUp () {
 
   // CONSIDER: When implementing save, should have a try/catch to tell them if errors present.
   // Initialize the error displays
-  let regexErrorsDisplayArray = [];
+  // regexErrorsDisplayArray = [];
   regexErrorsArray.forEach((regexError, i) => {
     let initialTextNode = document.createTextNode('');
     regexError.appendChild(initialTextNode);
     regexErrorsDisplayArray[i] = regexError.childNodes[0];
   });
+
+  produceFreshInt = (function() {
+    var gen = idMaker(regexpRecords.length);
+    idMaker = null;
+    return function() {
+      return gen.next().value
+    }
+  })();
 
   // Fill in regexeps to display to user, order is guaranteed in ES6 for interger keys
   regexpRecords.forEach(({regexp}, i) => {
@@ -153,11 +214,9 @@ function startUp () {
       try {
         let newRegexp = new RegExp(newRegexString, currRecord.opts);
         currRecord.regexp = newRegexp;
-        regexErrorsArray;
         
         // Clear the previously displayed error if regex creation was successful
-        
-        regexErrorsDisplayArray[numSuffixPosition].nodeValue = ``;
+        regexErrorsArray[numSuffixPosition].textContent = ``;
         console.log("new regex: ", newRegexp);
         // Need a sound to play when they previously had an error and cleared it.
 
@@ -168,7 +227,7 @@ function startUp () {
         });
       } catch(e) {
         sounds.error.resetPlay();
-        regexErrorsDisplayArray[numSuffixPosition].nodeValue = `Error: ${e}`;
+        regexErrorsArray[numSuffixPosition].textContent = `Error: ${e}`;
         return;
       }
     }
@@ -224,13 +283,27 @@ function startUp () {
 
     let regexpTarget = span.closest("div.flex-container");
     regexpTarget.parentElement.removeChild(regexpTarget);
+
+    // have to update global stuff
   }
 
   document.querySelector("#newRegex").addEventListener('click', addRegexp, {passive: true});
   function addRegexp(clickEvent) {
-    const totalRegexps = regexpRecords.length;
-    const newDOMRegexp = makeDOMRegexp(totalRegexps + 1);
-    document.querySelector("#level-delegator").appendChild(newDOMRegexp);
+    const regexpIndex = produceFreshInt();
+    const newDOMRegexp = makeDOMRegexp(regexpIndex);
+    window.requestAnimationFrame(() => {
+      regexpRecords[regexpRecords.length] = makeRegexRecord(/(?:)/, "u", false);
+      // TODO: I think this can be refactored into a query selector destructuring
+      positionIDMap.set(regexpIndex, regexpIndex);
+      idPositionMap.set(regexpIndex, regexpIndex);
+      
+      regexInputsArray[regexInputsArray.length] = newDOMRegexp.querySelector(`#regexInput${regexpIndex}`);
+      linkSpans[linkSpans.length] = newDOMRegexp.querySelector('.linker');
+      regexErrorsArray[regexErrorsArray.length] = newDOMRegexp.querySelector("code[id^=regexError");
+      //regexOptionsArray[regexOptionsArray.length] = newDOMRegexp.querySelectorAll('div[id^=regexOptions]');
+
+      document.querySelector("#level-delegator").appendChild(newDOMRegexp);
+    });
   }
   // adding
 
@@ -344,9 +417,15 @@ function regexpRecordSwap(keyDownOrPressEvent) {
     otherPosition = idPositionMap.get(otherID);
     
     swapElements(sibling, regexpRecordContainer);
-    mapSwap(positionIDMap, thisPosition, otherPosition)
+    mapSwap(positionIDMap, thisPosition, otherPosition);
     mapSwap(idPositionMap, thisID, otherID);
     swap(regexpRecords, thisPosition, otherPosition);
+    //swap(regexErrorsArray, thisPosition, otherPosition);
+    //text swap:
+    let thisErrorText = regexErrorsArray[thisPosition].textContent;
+    regexErrorsArray[thisPosition].textContent = regexErrorsArray[otherPosition].textContent;
+    regexErrorsArray[otherPosition].textContent = thisErrorText;
+    
     // linkSpans is allowed to swap since we access them positionally with a fromLevel to a toLevel.
     swap(linkSpans, thisPosition, otherPosition);
     swap(regexInputsArray, thisPosition, otherPosition);
