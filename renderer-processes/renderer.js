@@ -29,38 +29,6 @@ var produceFreshInt = (initialValue) => {
   }
 }
 
-
-// The whole point of this is want of a private variable
-// that can be accessed by produceFreshInt
-// var produceFreshInt;
-// var SingletonInt = function() {
-//   var freshIntSet;
-//   var resolveRef;
-//   var resolveProduce;
-//   this.setInt = (startInt) => {
-//     freshIntSet = startInt;
-//     resolveRef(freshIntSet);
-
-// This code is actually kinda funny...
-//     resolveProduce(produceFreshInt.then = function(cb) {
-//       cb(++freshIntSet);
-//       return produceFreshInt;
-//     });
-    
-//     this.setInt = null;
-//     SingletonInt = null;
-//     //singletonInt = null;
-//   };
-//   this.yieldInt = new Promise((resolve, reject) => {
-//     resolveRef = resolve;
-//   });
-
-//   produceFreshInt = new Promise((resolve, reject) => {
-//     resolveProduce = resolve;
-//   });
-// }
-// var singletonInt = new SingletonInt();
-
 // Generators are kind of like promises. They might be isomorphic.
 var produceFreshInt = idMaker();
 function* idMaker(initVal) {
@@ -151,7 +119,6 @@ const regexpRecords = [
   }
 ]
 
-// Level 2 goes to level 3
 var linkLevels = new Map();
 
 function startUp () {
@@ -282,8 +249,25 @@ function startUp () {
     if (span.tagName !== "SPAN" || !span.classList.contains("removeRegex")) return false;
 
     let regexpTarget = span.closest("div.flex-container");
-    regexpTarget.parentElement.removeChild(regexpTarget);
+    let parent = regexpTarget.parentElement;
+    parent.removeChild(regexpTarget.nextElementSibling); // only works if nextElementSibling is guaranteed to be a <code> element
+    parent.removeChild(regexpTarget);
+    
 
+    let numSuffix = parseInt(regexpTarget.querySelector("div[id^=regexOptions]").id.match(/[0-9]+/)[0]);
+
+    let position = idPositionMap.get(numSuffix);
+    idPositionMap.delete(numSuffix);
+    positionIDMap.delete(position);
+    
+    regexInputsArray.splice(position, 1);
+    linkSpans.splice(position, 1);
+    regexErrorsArray.splice(position, 1);
+
+    unhighlightLinkExtent(0, linkSpans.length - 1);
+    // link levels needs to be updated as well...for now just wipe it out
+    linkLevels.clear()
+    
     // have to update global stuff
     // use self-balancing trees. But right now, just slice.
   }
@@ -298,7 +282,6 @@ function startUp () {
       positionIDMap.set(regexpIndex, regexpIndex);
       idPositionMap.set(regexpIndex, regexpIndex);
       
-
       regexInputsArray[regexInputsArray.length] = newDOMRegexp.querySelector(`#regexInput${regexpIndex}`);
       linkSpans[linkSpans.length] = newDOMRegexp.querySelector('.linker');
       regexErrorsArray[regexErrorsArray.length] = newDOMRegexp.querySelector("code[id^=regexError");
@@ -346,10 +329,9 @@ function initializeOtherListeners () {
     if (linkExtent) {
       let fromLevel = linkExtent["left"]; let toLevel = linkExtent["right"];
 
-      requestAnimationFrame(function () {
+//      requestAnimationFrame(function () {
         // remove ranges when we actually selected over linker spans
         window.getSelection().removeAllRanges();
-        
         if (linkLevels.has(fromLevel) && linkLevels.get(fromLevel) === toLevel) {
           unhighlightLinkExtent(fromLevel, toLevel);
           linkLevels.delete(fromLevel);
@@ -358,7 +340,7 @@ function initializeOtherListeners () {
       
         linkLevels.set(fromLevel, toLevel);
         highlightLinkExtent(fromLevel, toLevel)
-      });
+  //    });
     }
     
     document.addEventListener("selectionchange", textSelectionListener);
@@ -581,9 +563,6 @@ function binarySearchForRightLink(range, searchContext, left, right) {
 function highlightLinkExtent(fromLevel, toLevel) {
   const parentSelector = "div.flex-container";
   const colorStringForLinkage = getRandomColor();
-
-  // const spanStartPosition = idPositionMap.get(parseInt(fromLevel));
-  // const spanEndPosition = idPositionMap.get(parseInt(toLevel));
   
   // top one shouldn't have verticl merge
   linkSpans[fromLevel].closest(parentSelector).style["background"] = colorStringForLinkage;
@@ -594,16 +573,26 @@ function highlightLinkExtent(fromLevel, toLevel) {
   }
 }
 
+// This is called to clear highlights across all levels when removing a regexp, hence different indexing
 function unhighlightLinkExtent(fromLevel, toLevel) {
   const parentSelector = "div.flex-container";
   
-  linkSpans[fromLevel].closest(parentSelector).style["background"] = null;
-  for(var i = fromLevel + 1; i <= toLevel; i++) {
+  for(var i = fromLevel; i <= toLevel; i++) {
     let targetDiv = linkSpans[i].closest(parentSelector);
     targetDiv.classList.remove("vertical-merge");
     targetDiv.style["background"] = null;
   }
 }
+
+// function unhighlightLinkLevels(fromLevel) {
+//   const parentSelector = "div.flex-container";
+//   const stopLevel = linkLevels.get(fromLevel);
+//   for (var i = fromLevel; i <= stopLevel; i++) {
+//     let targetDiv = linkSpans[i].closest(parentSelector);
+//     targetDiv.classList.remove("vertical-merge");
+//     targetDiv.style["background"] = null;
+//   }
+// }
 
 /** 
     http://stackoverflow.com/questions/1535128/apply-random-color-to-class-elements-individually
