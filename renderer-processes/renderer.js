@@ -285,6 +285,7 @@ function startUp () {
     regexpTarget.parentElement.removeChild(regexpTarget);
 
     // have to update global stuff
+    // use self-balancing trees. But right now, just slice.
   }
 
   document.querySelector("#newRegex").addEventListener('click', addRegexp, {passive: true});
@@ -297,6 +298,7 @@ function startUp () {
       positionIDMap.set(regexpIndex, regexpIndex);
       idPositionMap.set(regexpIndex, regexpIndex);
       
+
       regexInputsArray[regexInputsArray.length] = newDOMRegexp.querySelector(`#regexInput${regexpIndex}`);
       linkSpans[linkSpans.length] = newDOMRegexp.querySelector('.linker');
       regexErrorsArray[regexErrorsArray.length] = newDOMRegexp.querySelector("code[id^=regexError");
@@ -744,6 +746,8 @@ function asyncFilter(evt, regexpRecords, text) {
   let resultBuffer = [];
   let resultBufferIndex = null;
 
+  
+
   /** TODO: Have to save state between scrapeBoxFiller calls,
       I can do that here so the variables will be within closure
    **/
@@ -787,6 +791,10 @@ function asyncFilter(evt, regexpRecords, text) {
       let currLevel = 1; // 0 level is the top level regex
 
       let lastLevelBeforeLinkStart;
+      let beginLink = linkLevels.get(0);
+      if (beginLink) {
+        lastLevelBeforeLinkStart = -1;
+      }
 
       // TODO: This loop is now more complex than I am comfortable with.
       // [RC]
@@ -812,7 +820,7 @@ function asyncFilter(evt, regexpRecords, text) {
 
         // Clear buffer if we are branching the tree from another parent
         // There is another parent if currLevel is ancestor of level where linking starts
-        if (currMatch && Number.isInteger(lastLevelBeforeLinkStart) && currLevel <= lastLevelBeforeLinkStart) {
+        if (currMatch && Number.isInteger(lastLevelBeforeLinkStart) && currLevel <= lastLevelBeforeLinkStart + 1) {
           resultBuffer = [];
           resultBufferIndex = null;
         }
