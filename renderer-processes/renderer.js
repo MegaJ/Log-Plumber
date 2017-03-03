@@ -96,25 +96,25 @@ const regexpRecords = [
     //syslogd
     //regexp: /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
      regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
-    opts: "u",
+    regexpOpts: "u",
     scopeChildren: true
   },
 
   {
     regexp: / HIT: ([\s\S]*)/,
-    opts: "u",
+    regexpOpts: "u",
     scopeChildren: false
   },
 
   {
     regexp:  /\((.*)\) *[:|-]/,
-    opts: "u",
+    regexpOpts: "u",
     scopeChildren: false
   },
 
   {
     regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
-    opts: "u",
+    regexpOpts: "u",
     scopeChildren: false
   }
 ]
@@ -168,7 +168,7 @@ function startUp () {
   }
   
   function onRegexInputListener (evt, inputElement) {
-    let regexInputIdRegexp = /regexInput([0-9]*)/;
+    let regexInputIdRegexp = /regexInput([0-9]+)/;
     let match = inputElement.id.match(regexInputIdRegexp);
     if (match) {
       // TODO: stop asyncFilter with some sort of flag here
@@ -179,7 +179,7 @@ function startUp () {
 
       // Attempt to use the regex, which may be invalid
       try {
-        let newRegexp = new RegExp(newRegexString, currRecord.opts);
+        let newRegexp = new RegExp(newRegexString, currRecord.regexpOpts);
         currRecord.regexp = newRegexp;
         
         // Clear the previously displayed error if regex creation was successful
@@ -204,30 +204,32 @@ function startUp () {
   function onOptionsChangeListener (evt, inputElement) {
     if (inputElement.type !== "checkbox") return;
 
-    let scopeChildrenRegexp = /scopeChildren([0-9])*/;
+    let scopeChildrenRegexp = /scopeChildren([0-9]+)/;
     let match = inputElement.id.match(scopeChildrenRegexp);
     if (match) {
       let changedCheckbox = inputElement;
-      let numSuffix = match[1];
-      let currRecord = regexpRecords[numSuffix];
+      let numSuffix = parseInt(match[1]);
+      let position = idPositionMap.get(numSuffix);
+      let currRecord = regexpRecords[position];
       currRecord.scopeChildren = changedCheckbox.checked ? true : false;
       return;
     }
 
-    let regexOptionIdRegexp = /[gimu]([0-9]*)/;
+    let regexOptionIdRegexp = /[gimu]([0-9]+)/;
     match = inputElement.id.match(regexOptionIdRegexp)
     if (match) {
       let changedCheckbox = inputElement;
-      let numSuffix = match[1];
+      let numSuffix = parseInt(match[1]);
+      let position = idPositionMap.get(numSuffix);
       let option = changedCheckbox.name;
-      let currRecord = regexpRecords[numSuffix];
-      currRecord.opts = changedCheckbox.checked ? currRecord.opts + option : currRecord.opts.replace(option, '');
+      let currRecord = regexpRecords[position];
+      currRecord.regexpOpts = changedCheckbox.checked ? currRecord.regexpOpts + option : currRecord.regexpOpts.replace(option, '');
 
       // CONSIDER:
       // If we update the regexpRecord to actually have the /gimu flags,
       // On implementing a save, we may want to strip the regex of the flags
       // otherwise, user never gets /gimu flags displayed as text, only as checked input boxes
-      currRecord.regexp = new RegExp(currRecord.regexp, currRecord.opts);
+      currRecord.regexp = new RegExp(currRecord.regexp, currRecord.regexpOpts);
       
       sounds.affirm.resetPlay();
       window.requestAnimationFrame(() => {
@@ -775,6 +777,7 @@ function asyncFilter(evt, regexpRecords, text) {
 
       // TODO: Refactor this into a function, it is duplicated inside the for-loop below
       let matchedString = topLevelRegexp.exec(text);
+      if (!matchedString) { return ;}
       let currLevel = 1; // 0 level is the top level regex
       let currRegexp;
       for (; currLevel < regexpRecords.length; currLevel++) {
