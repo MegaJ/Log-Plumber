@@ -773,7 +773,6 @@ function asyncFilter(evt, regexpRecords, text) {
   let resultBufferIndex = null;
 
   
-
   /** TODO: Have to save state between scrapeBoxFiller calls,
       I can do that here so the variables will be within closure
    **/
@@ -817,10 +816,10 @@ function asyncFilter(evt, regexpRecords, text) {
 
       let currLevel = 1; // 0 level is the top level regex
 
-      let lastLevelBeforeLinkStart;
+      let currentLinkageStartLevel;
       let beginLink = linkLevels.get(0);
       if (beginLink) {
-        lastLevelBeforeLinkStart = -1;
+        currentLinkageStartLevel = 0;
       }
 
       // TODO: This loop is now more complex than I am comfortable with.
@@ -842,24 +841,27 @@ function asyncFilter(evt, regexpRecords, text) {
 
         let beginLink = linkLevels.get(currLevel);
         if (beginLink) {
-          lastLevelBeforeLinkStart = currLevel - 1;
+           currentLinkageStartLevel = currLevel;
         }
 
+        // ZZZ
         // Clear buffer if we are branching the tree from another parent
         // There is another parent if currLevel is ancestor of level where linking starts
-        if (currMatch && Number.isInteger(lastLevelBeforeLinkStart) && currLevel <= lastLevelBeforeLinkStart + 1) {
+        if (currMatch && Number.isInteger(currentLinkageStartLevel) && currLevel <= currentLinkageStartLevel) {
           resultBuffer = [];
           resultBufferIndex = null;
         }
 
+        // ZZZ
         // can't put things into this view until things actually exist
-        if (currMatch && !Number.isInteger(lastLevelBeforeLinkStart)) {
+        if (currMatch && !Number.isInteger(currentLinkageStartLevel)) {
           treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
           orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
         }
 
-        if (currMatch && Number.isInteger(lastLevelBeforeLinkStart)) {
-          let currOffset = currLevel - (lastLevelBeforeLinkStart + 1);
+        // ZZZ
+        if (currMatch && Number.isInteger(currentLinkageStartLevel)) {
+          let currOffset = currLevel - currentLinkageStartLevel;
           resultBuffer[currOffset] = currMatch[currMatch.length - 1];
 
           if (resultBufferIndex === null) {
@@ -872,25 +874,24 @@ function asyncFilter(evt, regexpRecords, text) {
         }
 
 
-        let endLevel = linkLevels.get(lastLevelBeforeLinkStart + 1);
+        let endLevel = linkLevels.get(currentLinkageStartLevel);
         // Loop through only a continguous subportion of the resultBuffer.
         // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
         if (currLevel === endLevel) {
           let shouldFlush = currMatch && Number.isInteger(resultBufferIndex);
           if (shouldFlush) {
             // TODO: I never figured out why resultBufferIndex + linkLength can exceed resultBuffer.length, but for the time being, this Math.min seems to work 
-            let linkLength = endLevel - lastLevelBeforeLinkStart;
+            let linkLength = endLevel - currentLinkageStartLevel + 1;
             let runLength = Math.min(resultBuffer.length, linkLength);
             for (let k = resultBufferIndex; k < runLength; k++) {
-              treeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
-              orgModeView.appendChild(parseInt(lastLevelBeforeLinkStart) + 1 + k, resultBuffer[k]);
+              treeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
+              orgModeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
             }
 
             resultBufferIndex = null;
           }
           
-          lastLevelBeforeLinkStart = null;
-          traversingInLinkedState = false; // TODO: use this instead of lastLevelBeforeLinkStart
+          currentLinkageStartLevel = null;
         }
       }
     }
