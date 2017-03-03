@@ -297,7 +297,13 @@ function startUp () {
       document.querySelector("#level-delegator").appendChild(newDOMRegexp);
     });
   }
-  // adding
+
+  document.querySelector("#execute").addEventListener("click", (clickEvent) => {
+    const runButton = clickEvent.target;
+    window.requestAnimationFrame(() => {
+      setImmediate(asyncFilter, runButton, regexpRecords, rawBox.value);
+    });
+  }, {passive: true});
 
   copyBtn.addEventListener('click', (evt) => {
     let scrapedText = scrapeBox.value;
@@ -322,7 +328,9 @@ function initializeOtherListeners () {
   var mouseupListener = function(event) {
 
     // Find out which link nodes have been selected by the selection
-    let range = window.getSelection().getRangeAt(0);
+    let selection = window.getSelection();
+    let range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    if (!range) return;
     let searchContext = document.querySelectorAll(".linker");
     let ancestorSelector = "div.flex-container";
     if (!range.startContainer.tagName) {
@@ -336,7 +344,7 @@ function initializeOtherListeners () {
     if (linkExtent) {
       let fromLevel = linkExtent["left"]; let toLevel = linkExtent["right"];
 
-//      requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
         // remove ranges when we actually selected over linker spans
         window.getSelection().removeAllRanges();
         if (linkLevels.has(fromLevel) && linkLevels.get(fromLevel) === toLevel) {
@@ -347,7 +355,7 @@ function initializeOtherListeners () {
       
         linkLevels.set(fromLevel, toLevel);
         highlightLinkExtent(fromLevel, toLevel)
-  //    });
+     });
     }
     
     document.addEventListener("selectionchange", textSelectionListener);
