@@ -258,8 +258,12 @@ function startUp () {
 
     let position = idPositionMap.get(numSuffix);
     idPositionMap.delete(numSuffix);
-    positionIDMap.delete(position);
-    
+    decrementMapValues(idPositionMap, position); //TODO: testttt!
+
+    //positionIDMap.delete(position);
+    produceMapReverse(idPositionMap, positionIDMap);
+
+    regexpRecords.splice(position, 1);
     regexInputsArray.splice(position, 1);
     linkSpans.splice(position, 1);
     regexErrorsArray.splice(position, 1);
@@ -277,14 +281,15 @@ function startUp () {
     const regexpIndex = produceFreshInt();
     const newDOMRegexp = makeDOMRegexp(regexpIndex);
     window.requestAnimationFrame(() => {
-      regexpRecords[regexpRecords.length] = makeRegexRecord(/(?:)/, "u", false);
-      // TODO: I think this can be refactored into a query selector destructuring
-      positionIDMap.set(regexpIndex, regexpIndex);
-      idPositionMap.set(regexpIndex, regexpIndex);
+      const newPosition = regexpRecords.length;
+      regexpRecords[newPosition] = makeRegexRecord(/(?:)/, "u", false);
+      // TODO: I think this can be refactored into a query selector destructurin
+      positionIDMap.set(newPosition, regexpIndex);
+      idPositionMap.set(regexpIndex, newPosition);
       
-      regexInputsArray[regexInputsArray.length] = newDOMRegexp.querySelector(`#regexInput${regexpIndex}`);
-      linkSpans[linkSpans.length] = newDOMRegexp.querySelector('.linker');
-      regexErrorsArray[regexErrorsArray.length] = newDOMRegexp.querySelector("code[id^=regexError");
+      regexInputsArray[newPosition] = newDOMRegexp.querySelector(`#regexInput${regexpIndex}`);
+      linkSpans[newPosition] = newDOMRegexp.querySelector('.linker');
+      regexErrorsArray[newPosition] = newDOMRegexp.querySelector("code[id^=regexError");
       //regexOptionsArray[regexOptionsArray.length] = newDOMRegexp.querySelectorAll('div[id^=regexOptions]');
 
       document.querySelector("#level-delegator").appendChild(newDOMRegexp);
@@ -465,6 +470,28 @@ function mapSwap(map, keyA, keyB) {
   map.set(keyA, map.get(keyB));
   map.set(keyB, tempA);
 }
+
+function decrementMapValues (aMap, pastThis) {
+  for (var [key, value] of aMap) {
+
+    if (value > pastThis) {
+      aMap.set(key, value - 1);
+    }
+  }
+
+  return aMap;
+}
+
+function produceMapReverse(aMap, bMap) {
+  bMap = bMap || new Map();
+  bMap.clear();
+  for (var [key, value] of aMap) {
+    bMap.set(value, key);
+  }
+
+  return bMap;
+}
+
 
 // http://stackoverflow.com/questions/10716986/swap-2-html-elements-and-preserve-event-listeners-on-them
 function swapElements(obj1, obj2) {
