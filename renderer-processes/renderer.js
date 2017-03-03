@@ -7,27 +7,18 @@ const {clipboard, ipcRenderer, remote: {Menu}} = require('electron');
 
 window.onload = startUp;
 
-
 const idIt = document.getElementById.bind(document);
-const rAF = window.requestAnimationFrame;
 
 const rawBox = idIt('rawBox');
 const scrapeBox = idIt('scrapeBox');
 const copyBtn = document.getElementById('copyBtn');
 const regexInputsArray = nodelistToArray(document.querySelectorAll('input[id^=regexInput]'));
-// Each element is a nodelist of /gim input elements
-// const regexOptionsArray = document.querySelectorAll('div[id^=regexOptions]'); 
 const regexErrorsArray = nodelistToArray(document.querySelectorAll('code[id^=regexError]'));
 const regexErrorsDisplayArray = [];
 const delegator = document.querySelector('#level-delegator');
 const linkSpans = nodelistToArray(document.querySelectorAll('.linker'));
 
-var produceFreshInt = (initialValue) => {
-  var freshInt = initialValue;
-  return () => {
-    return freshInt++;
-  }
-}
+const linkLevels = new Map();
 
 // Generators are kind of like promises. They might be isomorphic.
 var produceFreshInt = idMaker();
@@ -87,10 +78,8 @@ function makeDOMRegexp (number) {
     on DOM changes to regexInput*, regexOptions*, and linker elements
     Regex Options are never displayed as a string in the UI
 **/
-// TODO: make all options include the /u flag?
+
 // TODO: implement loading from stored json later
-// TODO: implement linking levels, meaning that you do not show a level
-//       unless its k-th child also exists.
 const regexpRecords = [
   {
     //syslogd
@@ -119,8 +108,6 @@ const regexpRecords = [
   }
 ]
 
-var linkLevels = new Map();
-
 function startUp () {
 
   rawBox.wrap = scrapeBox.wrap ="off"; // unnecessary?
@@ -144,11 +131,11 @@ function startUp () {
 
   // Fill in regexeps to display to user, order is guaranteed in ES6 for interger keys
   regexpRecords.forEach(({regexp}, i) => {
-    // CONSIDER: I'll be saving regexps with their flags, so when loading them, I'll have to make sure some inputs are checked
     // Expecting matching to happen like this: [ '/a/', 'a', index: 0, input: '/a/g' ]
     regexInputsArray[i].value = regexp.toString().match(/\/(.*)\//)[1];
   });
 
+  // TODO: Group together the functionality that calls asyncFilter real-time, so it can be triggered by the lightning button
   rawBox.addEventListener('input', (evt) => window.requestAnimationFrame(() => {
     setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
   }, {passive: true}));
@@ -172,6 +159,9 @@ function startUp () {
     let match = inputElement.id.match(regexInputIdRegexp);
     if (match) {
       // TODO: stop asyncFilter with some sort of flag here
+
+      
+      
       let numSuffix = match[1];
       let numSuffixPosition = idPositionMap.get(parseInt(numSuffix));
       let currRecord = regexpRecords[numSuffixPosition];
@@ -275,7 +265,7 @@ function startUp () {
     linkLevels.clear()
     
     // have to update global stuff
-    // use self-balancing trees. But right now, just slice.
+    // use self-balancing trees. But right now, just splice.
   }
 
   document.querySelector("#newRegex").addEventListener('click', addRegexp, {passive: true});
@@ -326,12 +316,12 @@ function initializeOtherListeners () {
   }, {passive: true});
 
   var mouseupListener = function(event) {
-
     // Find out which link nodes have been selected by the selection
     let selection = window.getSelection();
     let range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
     if (!range) return;
-    let searchContext = document.querySelectorAll(".linker");
+    
+    let searchContext = linkSpans;
     let ancestorSelector = "div.flex-container";
     if (!range.startContainer.tagName) {
       range.setStart(range.startContainer.parentElement.closest(ancestorSelector), 0);
@@ -376,9 +366,7 @@ function initializeOtherListeners () {
 }
 
 
-// TODO: Need to make sure the linkLevels map is correct
-// TODO: swap regexpRecords, not just in DOM
-// TODO: swap linkSpans
+// TODO: Need to make sure the linkLevels UI indications remain with their original levels.
 function regexpRecordSwap(keyDownOrPressEvent) {
   if (!keyDownOrPressEvent.altKey) return false;
   if (keyDownOrPressEvent.keyCode !== 38 && keyDownOrPressEvent.keyCode !== 40) return false;
@@ -409,30 +397,30 @@ function regexpRecordSwap(keyDownOrPressEvent) {
     otherID = positionIDMap.get(thisPosition + 1);
   }
 
-  if (sibling !== null) {
-    // I actually want to be able to get the id from the position. This prevents me from doing this:
-    //let otherStringPosition = sibling.querySelector(".regexInput").id.match(/regexInput([0-9]+)/)[1];
-    //otherPosition = idPositionMap.get(parseInt(otherStringPosition));
-    otherPosition = idPositionMap.get(otherID);
-    
-    swapElements(sibling, regexpRecordContainer);
-    mapSwap(positionIDMap, thisPosition, otherPosition);
-    mapSwap(idPositionMap, thisID, otherID);
-    swap(regexpRecords, thisPosition, otherPosition);
-    //swap(regexErrorsArray, thisPosition, otherPosition);
-    //text swap:
-    let thisErrorText = regexErrorsArray[thisPosition].textContent;
-    regexErrorsArray[thisPosition].textContent = regexErrorsArray[otherPosition].textContent;
-    regexErrorsArray[otherPosition].textContent = thisErrorText;
-    
-    // linkSpans is allowed to swap since we access them positionally with a fromLevel to a toLevel.
-    swap(linkSpans, thisPosition, otherPosition);
-    swap(regexInputsArray, thisPosition, otherPosition);
-    // swap(regexErrorsDisplayArray, thisPosition, otherPosition);
-    // TODO: if there is an error state, swap the errors and change the ids
-  }
+  window.requestAnimationFrame(() => {
+    if (sibling !== null) {
+      otherPosition = idPositionMap.get(otherID);
 
-  regexpRecordInput.focus();
+
+      swapElements(sibling, regexpRecordContainer);
+      mapSwap(positionIDMap, thisPosition, otherPosition);
+      mapSwap(idPositionMap, thisID, otherID);
+      swap(regexpRecords, thisPosition, otherPosition);
+      /** regexErrorsArray doesn't need to swap because I swap the text nodes within them**/
+      //swap(regexErrorsArray, thisPosition, otherPosition);
+      //text swap:
+      let thisErrorText = regexErrorsArray[thisPosition].textContent;
+      regexErrorsArray[thisPosition].textContent = regexErrorsArray[otherPosition].textContent;
+      regexErrorsArray[otherPosition].textContent = thisErrorText;
+      
+      // linkSpans should swap since we access them positionally with a fromLevel to a toLevel.
+      swap(linkSpans, thisPosition, otherPosition);
+      swap(regexInputsArray, thisPosition, otherPosition);
+      
+    }
+
+    regexpRecordInput.focus();
+  });
 }
 
 
@@ -450,8 +438,8 @@ function findSibling(element, filter, forward = true) {
   return currElement;
 }
 
-var idPositionMap = new Map();
-var positionIDMap = new Map();
+const idPositionMap = new Map();
+const positionIDMap = new Map();
 for(let i = 0; i < regexpRecords.length; i++) {
   idPositionMap.set(i, i);
   positionIDMap.set(i, i);
@@ -493,7 +481,7 @@ function decrementMapValues (aMap, pastThis) {
 }
 
 function produceMapReverse(aMap, bMap) {
-  bMap = bMap || new Map();
+  var bMap = bMap || new Map();
   bMap.clear();
   for (var [key, value] of aMap) {
     bMap.set(value, key);
@@ -756,13 +744,14 @@ function toggleDisableOnButton(selection, flag) {
 
    This module should allow objects as arguments to specify a "mode", e.g., give output compatible to org-mode
 **/
-function asyncFilter(evt, regexpRecords, text) {
+function asyncFilter(evt, regexpRecords, text, modes) {
   let renderFirstBatch = true;
   let matchesPerBatch = 100;
   let doneFlag = false;
 
   let topLevelRegexp = regexpRecords[0].regexp;
-  
+
+  // TODO: can make the view objects singletons, add them to global scope
   let treeView = makeTreeView();
   let orgModeView = makeOrgModeView();
   const DOMTargetParent = document.getElementById("treeView");
@@ -773,8 +762,8 @@ function asyncFilter(evt, regexpRecords, text) {
   let resultBufferIndex = null;
 
   
-  /** TODO: Have to save state between scrapeBoxFiller calls,
-      I can do that here so the variables will be within closure
+  /** TODO: Make scrapeBoxFiller recursive. Right now, regexps 
+      beyond level 0 have useless /g flags, because they are never checked.
    **/
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
@@ -822,7 +811,6 @@ function asyncFilter(evt, regexpRecords, text) {
         currentLinkageStartLevel = 0;
       }
 
-      // TODO: This loop is now more complex than I am comfortable with.
       // [RC]
       let currRegexp;
       let currRecord;
@@ -844,35 +832,34 @@ function asyncFilter(evt, regexpRecords, text) {
            currentLinkageStartLevel = currLevel;
         }
 
-        // ZZZ
-        // Clear buffer if we are branching the tree from another parent
-        // There is another parent if currLevel is ancestor of level where linking starts
-        if (currMatch && Number.isInteger(currentLinkageStartLevel) && currLevel <= currentLinkageStartLevel) {
-          resultBuffer = [];
-          resultBufferIndex = null;
-        }
-
-        // ZZZ
-        // can't put things into this view until things actually exist
-        if (currMatch && !Number.isInteger(currentLinkageStartLevel)) {
-          treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-          orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-        }
-
-        // ZZZ
-        if (currMatch && Number.isInteger(currentLinkageStartLevel)) {
-          let currOffset = currLevel - currentLinkageStartLevel;
-          resultBuffer[currOffset] = currMatch[currMatch.length - 1];
-
-          if (resultBufferIndex === null) {
-            resultBufferIndex = currOffset;
+        if (currMatch) {
+          // Clear buffer if we are branching the tree from another parent
+          // There is another parent if currLevel is ancestor of level where linking starts
+          if (Number.isInteger(currentLinkageStartLevel) && currLevel <= currentLinkageStartLevel) {
+            resultBuffer = [];
+            resultBufferIndex = null;
           }
+          
+          /** Views are only safe to save to if linkage constraints are satisfied. 
+              Otherwise, wait for linkage to be resolved at the endLevel.
+           **/
+          if (!Number.isInteger(currentLinkageStartLevel)) {
+            treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+            orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+            
+          } else {
+            let currOffset = currLevel - currentLinkageStartLevel;
+            resultBuffer[currOffset] = currMatch[currMatch.length - 1];
 
-          if (resultBufferIndex > 0) {
-            resultBufferIndex = resultBufferIndex > currOffset ? currOffset : resultBufferIndex;
+            if (resultBufferIndex === null) {
+              resultBufferIndex = currOffset;
+            }
+
+            if (resultBufferIndex > 0) {
+              resultBufferIndex = resultBufferIndex > currOffset ? currOffset : resultBufferIndex;
+            }
           }
         }
-
 
         let endLevel = linkLevels.get(currentLinkageStartLevel);
         // Loop through only a continguous subportion of the resultBuffer.
