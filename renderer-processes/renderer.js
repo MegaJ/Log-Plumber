@@ -815,8 +815,6 @@ function asyncFilter(evt, regexpRecords, text, modes) {
         currentLinkageStartLevel = 0;
       }
 
-      // [RC]
-      // TODO: Use labels? 
       // Assume the level in question is legal
       let nextLevel = 1; 
       let programStack = [];
@@ -866,42 +864,47 @@ TextProcess.prototype.run = function (programStack, resultBuffer, orgModeView, t
     let beginLink = linkLevels.get(currLevel);
     if (beginLink) {
       currentLinkageStartLevel = currLevel;
-    }
+    }   
 
+    let recurseDown = false;
     let currMatch;
     if (currRegexp.global) {
       currMatch = currRegexp.exec(textScope);
       if (currMatch) {
         textScope = currMatch[currMatch.length - 1];
-
-        let nextLevel = currLevel + 1;
-        if (nextLevel < regexpRecords.length) {
-          programStack[programStack.length] = {
-            currLevel: nextLevel,
-            textScope: textScope,
-            currentLinkageStartLevel: currentLinkageStartLevel
-          };
-        }
-
-        // Recurse down
-        continue; 
+        recurseDown = true;
       }
-      
     } else {
       currMatch = textScope.match(currRegexp);
     }
 
-    // Commit the pop only when we are ready to add something to views or buffer
+    let nextLevel = currLevel + 1;
+    let nextStackInstance = {
+      currLevel: nextLevel,
+      textScope: textScope,
+      currentLinkageStartLevel: currentLinkageStartLevel
+    };
+    if (nextLevel < regexpRecords.length && recurseDown) {
+      programStack[programStack.length] = nextStackInstance;
+    }
+    if (recurseDown) {continue;} // global regexps can't pop yet, because they get revisited for successive matches due to the /g flag
+
+    // Commit the pop only when we are ready to add something to views or resultBuffer
     programStack.length = programStack.length - 1;
 
-    // TODO: If /g, then there is an automatic scope or is there?
+    // If /g, then there is an automatic scope. All its matches are processed by regexps down the tree
+    // So there will be no match for the rest of the while loop
     if (currRecord.scopeChildren) {
-      // TODO: not sure how this works anymore
-      // If there are no matches at this level, all levels below will not match, so break;
       if (currMatch == null) {
-        continue; // used to be break
+        // If there are no matches at this level, all levels below will not match so go to level above
+        continue;
       }
       textScope = currMatch[currMatch.length - 1];
+      nextStackInstance.textScope = textScope;
+    }
+
+    if (nextLevel < regexpRecords.length) {
+      programStack[programStack.length] = nextStackInstance;
     }
 
 
@@ -949,18 +952,6 @@ TextProcess.prototype.run = function (programStack, resultBuffer, orgModeView, t
 
         this.resultBufferIndex = null;
       }
-      
-      currentLinkageStartLevel = null;
-    }
-
-    
-    let nextLevel = currLevel + 1;
-    if (nextLevel < regexpRecords.length) {
-      programStack[programStack.length] = {
-        currLevel: nextLevel,
-        textScope: textScope,
-        currentLinkageStartLevel: currentLinkageStartLevel
-      };
     }
   }
 }
