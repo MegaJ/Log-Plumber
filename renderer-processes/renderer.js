@@ -194,21 +194,20 @@ function startUp () {
     if (inputElement.type !== "checkbox") return;
 
     let scopeChildrenRegexp = /scopeChildren([0-9]+)/;
-    let match = inputElement.id.match(scopeChildrenRegexp);
-    if (match) {
+    let scopeMatch = inputElement.id.match(scopeChildrenRegexp);
+    if (scopeMatch) {
       let changedCheckbox = inputElement;
-      let numSuffix = parseInt(match[1]);
+      let numSuffix = parseInt(scopeMatch[1]);
       let position = idPositionMap.get(numSuffix);
       let currRecord = regexpRecords[position];
       currRecord.scopeChildren = changedCheckbox.checked ? true : false;
-      return;
     }
 
     let regexOptionIdRegexp = /[gimu]([0-9]+)/;
-    match = inputElement.id.match(regexOptionIdRegexp)
-    if (match) {
+    optionMatch = inputElement.id.match(regexOptionIdRegexp)
+    if (optionMatch) {
       let changedCheckbox = inputElement;
-      let numSuffix = parseInt(match[1]);
+      let numSuffix = parseInt(optionMatch[1]);
       let position = idPositionMap.get(numSuffix);
       let option = changedCheckbox.name;
       let currRecord = regexpRecords[position];
@@ -219,13 +218,15 @@ function startUp () {
       // On implementing a save, we may want to strip the regex of the flags
       // otherwise, user never gets /gimu flags displayed as text, only as checked input boxes
       currRecord.regexp = new RegExp(currRecord.regexp, currRecord.regexpOpts);
-      
+    }
+
+    if (scopeMatch || optionMatch) {
       sounds.affirm.resetPlay();
       window.requestAnimationFrame(() => {
         // hard code to start from the top, won't have to if I implement diffing
         setImmediate(asyncFilter, evt, regexpRecords, rawBox.value);
       });
-    } 
+    }
   }
   
   delegator.addEventListener('input', delegationMakerHelper(onRegexInputListener), {capture: true, passive: true});
@@ -249,9 +250,7 @@ function startUp () {
 
     let position = idPositionMap.get(numSuffix);
     idPositionMap.delete(numSuffix);
-    decrementMapValues(idPositionMap, position); //TODO: testttt!
-
-    //positionIDMap.delete(position);
+    decrementMapValues(idPositionMap, position);
     produceMapReverse(idPositionMap, positionIDMap);
 
     regexpRecords.splice(position, 1);
@@ -261,7 +260,7 @@ function startUp () {
 
     unhighlightLinkExtent(0, linkSpans.length - 1);
     // link levels needs to be updated as well...for now just wipe it out
-    linkLevels.clear()
+    linkLevels.clear();
     
     // have to update global stuff
     // use self-balancing trees. But right now, just splice.
@@ -281,7 +280,6 @@ function startUp () {
       regexInputsArray[newPosition] = newDOMRegexp.querySelector(`#regexInput${regexpIndex}`);
       linkSpans[newPosition] = newDOMRegexp.querySelector('.linker');
       regexErrorsArray[newPosition] = newDOMRegexp.querySelector("code[id^=regexError");
-      //regexOptionsArray[regexOptionsArray.length] = newDOMRegexp.querySelectorAll('div[id^=regexOptions]');
 
       document.querySelector("#level-delegator").appendChild(newDOMRegexp);
     });
