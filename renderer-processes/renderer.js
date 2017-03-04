@@ -752,38 +752,43 @@ function asyncFilter(evt, regexpRecords, text, modes) {
   let topLevelRegexp = regexpRecords[0].regexp;
 
   // TODO: can make the view objects singletons, add them to global scope
+  // TODO: Add methods to clear the view objects
   let treeView = makeTreeView();
   let orgModeView = makeOrgModeView();
+
+  // TODO: set selectors inside each view object so I don't have to expose these references...
   const DOMTargetParent = document.getElementById("treeView");
   const DOMTarget = DOMTargetParent.firstElementChild;
 
-  // For link levels feature
+  // For link levels feature...may need to be referenced in the program stack objects
   let resultBuffer = [];
   let resultBufferIndex = null;
-
   
-  /** TODO: Make scrapeBoxFiller recursive. Right now, regexps 
-      beyond level 0 have useless /g flags, because they are never checked.
-   **/
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
     let matches = [];
-    
-    if (!topLevelRegexp.global) { //TODO: Match behavior with global regexp branch
 
-      // TODO: Refactor this into a function, it is duplicated inside the for-loop below
+    // pull these innards outside of the global and non global checks
+    if (!topLevelRegexp.global) { 
       let matchedString = topLevelRegexp.exec(text);
-      if (!matchedString) { return ;}
-      let currLevel = 1; // 0 level is the top level regex
-      let currRegexp;
-      for (; currLevel < regexpRecords.length; currLevel++) {
-        currRegexp = regexpRecords[currLevel].regexp;
-        let currMatch = matchedString[matchedString.length - 1].match(currRegexp);
-        if (currMatch) {
-          treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-          orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-        }
+      let textScope = matchedString[matchedString.length - 1];
+      
+      let nextLevel = 1;
+      let currentLinkageStartLevel;
+      let beginLink = linkLevels.get(0);
+      if (beginLink) {
+        currentLinkageStartLevel = 0;
       }
+      
+      let programStack = [];
+      let programState = {
+        currLevel: nextLevel,
+        textScope: textScope,
+        currentLinkageStartLevel: currentLinkageStartLevel
+      }
+      programStack[0] = programState;
+
+      textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView, treeView);
 
       window.requestAnimationFrame(() => {
         scrapeBox.value = orgModeView.orgText;
@@ -803,8 +808,6 @@ function asyncFilter(evt, regexpRecords, text, modes) {
 
       let textScope = matchedString[matchedString.length - 1];
 
-      let currLevel = 1; // 0 level is the top level regex
-
       let currentLinkageStartLevel;
       let beginLink = linkLevels.get(0);
       if (beginLink) {
@@ -814,130 +817,16 @@ function asyncFilter(evt, regexpRecords, text, modes) {
       // [RC]
       // TODO: Use labels? 
       // Assume the level in question is legal
+      let nextLevel = 1; 
       let programStack = [];
       let programState = {
-        currRecord: regexpRecords[currLevel],
-        currRegexp: regexpRecords[currLevel].regexp,
-        currLevel: currLevel,
+        currLevel: nextLevel,
         textScope: textScope,
         currentLinkageStartLevel: currentLinkageStartLevel
       }
 
       programStack[0] = programState;
-      while(programStack.length) {
-        let programState = programStack[programStack.length - 1];
-        
-        let currRecord = programState.currRecord;
-        let currRegexp = programState.currRegexp;
-        let currLevel = programState.currLevel;
-        let textScope = programState.textScope;
-        let currentLinkageStartLevel = programState.currentLinkageStartLevel;
-
-        let currMatch;
-        if (currRegexp.global) {
-          currMatch = currRegexp.exec(textScope);
-          if (currMatch) {
-            textScope = currMatch[currMatch.length - 1];
-
-            let nextLevel = currLevel + 1;
-            if (nextLevel < regexpRecords.length) {
-              programStack[programStack.length] = {
-                currRecord: regexpRecords[nextLevel],
-                currRegexp: regexpRecords[nextLevel].regexp,
-                currLevel: nextLevel,
-                textScope: textScope,
-                currentLinkageStartLevel: currentLinkageStartLevel
-              };
-            }
-
-            // Recurse down
-            continue; 
-          }
-         
-        } else {
-          currMatch = textScope.match(currRegexp);
-        }
-
-        // Commit the pop only when we are ready to add something to views or buffer
-        programStack.length = programStack.length - 1;
-
-        // TODO: If /g, then there is an automatic scope or is there?
-        if (currRecord.scopeChildren) {
-          // TODO: not sure how this works anymore
-          // If there are no matches at this level, all levels below will not match, so break;
-          if (currMatch == null) {
-            continue; // used to be break
-          }
-          textScope = currMatch[currMatch.length - 1];
-        }
-
-        let beginLink = linkLevels.get(currLevel);
-        if (beginLink) {
-          currentLinkageStartLevel = currLevel;
-        }
-
-        if (currMatch) {
-          // Clear buffer if we are branching the tree from another parent
-          // There is another parent if currLevel is ancestor of level where linking starts
-          if (Number.isInteger(currentLinkageStartLevel) && currLevel <= currentLinkageStartLevel) {
-            resultBuffer = [];
-            resultBufferIndex = null;
-          }
-          
-          /** Views are only safe to save to if linkage constraints are satisfied. 
-              Otherwise, wait for linkage to be resolved at the endLevel.
-          **/
-          if (!Number.isInteger(currentLinkageStartLevel)) {
-            treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-            orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
-            
-          } else {
-            let currOffset = currLevel - currentLinkageStartLevel;
-            resultBuffer[currOffset] = currMatch[currMatch.length - 1];
-
-            if (resultBufferIndex === null) {
-              resultBufferIndex = currOffset;
-            }
-
-            if (resultBufferIndex > 0) {
-              resultBufferIndex = resultBufferIndex > currOffset ? currOffset : resultBufferIndex;
-            }
-          }
-        }
-
-        let endLevel = linkLevels.get(currentLinkageStartLevel);
-        // Loop through only a continguous subportion of the resultBuffer.
-        // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
-        if (currLevel === endLevel) {
-          let shouldFlush = currMatch && Number.isInteger(resultBufferIndex);
-          if (shouldFlush) {
-            // TODO: I never figured out why resultBufferIndex + linkLength can exceed resultBuffer.length, but for the time being, this Math.min seems to work 
-            let linkLength = endLevel - currentLinkageStartLevel + 1;
-            let runLength = Math.min(resultBuffer.length, linkLength);
-            for (let k = resultBufferIndex; k < runLength; k++) {
-              treeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
-              orgModeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
-            }
-
-            resultBufferIndex = null;
-          }
-          
-          currentLinkageStartLevel = null;
-        }
-
-        
-        let nextLevel = currLevel + 1;
-        if (nextLevel < regexpRecords.length) {
-          programStack[programStack.length] = {
-            currRecord: regexpRecords[nextLevel],
-            currRegexp: regexpRecords[nextLevel].regexp,
-            currLevel: nextLevel,
-            textScope: textScope,
-            currentLinkageStartLevel: currentLinkageStartLevel
-          };
-          
-        }
-      }
+      textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView, treeView);
     }
 
     // to give impression of responsiveness, render a small portion
@@ -953,4 +842,116 @@ function asyncFilter(evt, regexpRecords, text, modes) {
     }
     window.requestAnimationFrame(scrapeBoxFiller);
   });
+}
+
+function textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView, treeView) {
+  while(programStack.length) {
+    let programState = programStack[programStack.length - 1];
+    let currLevel = programState.currLevel;
+    let textScope = programState.textScope;
+    let currentLinkageStartLevel = programState.currentLinkageStartLevel;
+
+    let currRecord = regexpRecords[currLevel];
+    let currRegexp = currRecord.regexp;
+
+    let currMatch;
+    if (currRegexp.global) {
+      currMatch = currRegexp.exec(textScope);
+      if (currMatch) {
+        textScope = currMatch[currMatch.length - 1];
+
+        let nextLevel = currLevel + 1;
+        if (nextLevel < regexpRecords.length) {
+          programStack[programStack.length] = {
+            currLevel: nextLevel,
+            textScope: textScope,
+            currentLinkageStartLevel: currentLinkageStartLevel
+          };
+        }
+
+        // Recurse down
+        continue; 
+      }
+      
+    } else {
+      currMatch = textScope.match(currRegexp);
+    }
+
+    // Commit the pop only when we are ready to add something to views or buffer
+    programStack.length = programStack.length - 1;
+
+    // TODO: If /g, then there is an automatic scope or is there?
+    if (currRecord.scopeChildren) {
+      // TODO: not sure how this works anymore
+      // If there are no matches at this level, all levels below will not match, so break;
+      if (currMatch == null) {
+        continue; // used to be break
+      }
+      textScope = currMatch[currMatch.length - 1];
+    }
+
+    let beginLink = linkLevels.get(currLevel);
+    if (beginLink) {
+      currentLinkageStartLevel = currLevel;
+    }
+
+    if (currMatch) {
+      // Clear buffer if we are branching the tree from another parent
+      // There is another parent if currLevel is ancestor of level where linking starts
+      if (Number.isInteger(currentLinkageStartLevel) && currLevel <= currentLinkageStartLevel) {
+        resultBuffer = [];
+        resultBufferIndex = null;
+      }
+      
+      /** Views are only safe to save to if linkage constraints are satisfied. 
+          Otherwise, wait for linkage to be resolved at the endLevel.
+      **/
+      if (!Number.isInteger(currentLinkageStartLevel)) {
+        treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+        orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
+        
+      } else {
+        let currOffset = currLevel - currentLinkageStartLevel;
+        resultBuffer[currOffset] = currMatch[currMatch.length - 1];
+
+        if (resultBufferIndex === null) {
+          resultBufferIndex = currOffset;
+        }
+
+        if (resultBufferIndex > 0) {
+          resultBufferIndex = resultBufferIndex > currOffset ? currOffset : resultBufferIndex;
+        }
+      }
+    }
+
+    let endLevel = linkLevels.get(currentLinkageStartLevel);
+    // Loop through only a continguous subportion of the resultBuffer.
+    // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
+    if (currLevel === endLevel) {
+      let shouldFlush = currMatch && Number.isInteger(resultBufferIndex);
+      if (shouldFlush) {
+        // TODO: I never figured out why resultBufferIndex + linkLength can exceed resultBuffer.length, but for the time being, this Math.min seems to work 
+        let linkLength = endLevel - currentLinkageStartLevel + 1;
+        let runLength = Math.min(resultBuffer.length, linkLength);
+        for (let k = resultBufferIndex; k < runLength; k++) {
+          treeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
+          orgModeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
+        }
+
+        resultBufferIndex = null;
+      }
+      
+      currentLinkageStartLevel = null;
+    }
+
+    
+    let nextLevel = currLevel + 1;
+    if (nextLevel < regexpRecords.length) {
+      programStack[programStack.length] = {
+        currLevel: nextLevel,
+        textScope: textScope,
+        currentLinkageStartLevel: currentLinkageStartLevel
+      };
+    }
+  }
 }
