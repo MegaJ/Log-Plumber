@@ -17,7 +17,6 @@ const regexErrorsArray = nodelistToArray(document.querySelectorAll('code[id^=reg
 const regexErrorsDisplayArray = [];
 const delegator = document.querySelector('#level-delegator');
 const linkSpans = nodelistToArray(document.querySelectorAll('.linker'));
-
 const linkLevels = new Map();
 
 // Generators are kind of like promises. They might be isomorphic.
@@ -763,34 +762,23 @@ function asyncFilter(evt, regexpRecords, text, modes) {
   let resultBuffer = [];
   let resultBufferIndex = null;
   let textProcess = new TextProcess();
-  
-  window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
+
+  // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
+  window.requestAnimationFrame(scrapeBoxFiller);
+
+  function scrapeBoxFiller() {
     let matchIndex = 0;
     let matches = [];
 
-    // pull these innards outside of the global and non global checks
-    if (!topLevelRegexp.global) { 
-      let matchedString = topLevelRegexp.exec(text);
-      let textScope = matchedString[matchedString.length - 1];
-      
-      let nextLevel = 1;
-      let currentLinkageStartLevel;
-      let beginLink = linkLevels.get(0);
-      if (beginLink) {
-        currentLinkageStartLevel = 0;
-      }
-      
+    /** 
+        This is not worth refactoring into the for loop below because of 
+        how a regular expression's .lastIndex property doesn't increment
+        when the regexp isn't global. I can manually set it, but that feels wrong.
+     **/
+    if (!topLevelRegexp.global) {
       let programStack = [];
-      let programState = {
-        currLevel: nextLevel,
-        textScope: textScope,
-        currentLinkageStartLevel: currentLinkageStartLevel
-      }
-      programStack[0] = programState;
-
-      // TODO: should store its own private variables...like result Buffer index
+      initializeProgramStack(programStack, topLevelRegexp, text)
       textProcess.run(programStack, resultBuffer, orgModeView, treeView);
-
       window.requestAnimationFrame(() => {
         scrapeBox.value = orgModeView.orgText;
         treeView.flushAttach(DOMTargetParent, DOMTarget);
@@ -801,34 +789,17 @@ function asyncFilter(evt, regexpRecords, text, modes) {
     
     // Do actual regex matching to tokenize text
     for(let i = 0; i < matchesPerBatch; i++) {
-      let matchedString = topLevelRegexp.exec(text);
+      let programStack = [];
+      let matchedString = initializeProgramStack(programStack, topLevelRegexp, text);
       if (!matchedString) {
         doneFlag = true;
         break;
       }
 
-      let textScope = matchedString[matchedString.length - 1];
-
-      let currentLinkageStartLevel;
-      let beginLink = linkLevels.get(0);
-      if (beginLink) {
-        currentLinkageStartLevel = 0;
-      }
-
-      // Assume the level in question is legal
-      let nextLevel = 1; 
-      let programStack = [];
-      let programState = {
-        currLevel: nextLevel,
-        textScope: textScope,
-        currentLinkageStartLevel: currentLinkageStartLevel
-      }
-
-      programStack[0] = programState;
       textProcess.run(programStack, resultBuffer, orgModeView, treeView);
     }
 
-    // to give impression of responsiveness, render a small portion
+    // To give impression of responsiveness, render a small portion
     if(renderFirstBatch) {
       scrapeBox.value = orgModeView.orgText;
       renderFirstBatch = false;
@@ -840,7 +811,35 @@ function asyncFilter(evt, regexpRecords, text, modes) {
       return;
     }
     window.requestAnimationFrame(scrapeBoxFiller);
-  });
+  }
+}
+
+/**
+   Note the additional side effect of moving topLevelRegexp.lastIndex every time this functino is called,
+   when topLevelRegexp is global.
+**/
+function initializeProgramStack(programStack, topLevelRegexp, text) {
+  let matchedString = topLevelRegexp.exec(text);
+  if (!matchedString) return matchedString;
+  
+  let textScope = matchedString[matchedString.length - 1]; // matchedString might be null
+
+  let nextLevel = 1; // check if the next level even exists
+  let currentLinkageStartLevel;
+  let beginLink = linkLevels.get(0);
+  if (beginLink) {
+    currentLinkageStartLevel = 0;
+  }
+  
+  let programState = {
+    currLevel: nextLevel,
+    textScope: textScope,
+    currentLinkageStartLevel: currentLinkageStartLevel
+  }
+  programStack[0] = programState;
+
+  
+  return matchedString;
 }
 
 function TextProcess() {
