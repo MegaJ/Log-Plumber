@@ -812,24 +812,68 @@ function asyncFilter(evt, regexpRecords, text, modes) {
       }
 
       // [RC]
-      let currRegexp;
-      let currRecord;
-      for (; currLevel < regexpRecords.length; currLevel++) {        
-        currRecord = regexpRecords[currLevel];
-        currRegexp = currRecord.regexp;
+      // TODO: Use labels? 
+      // Assume the level in question is legal
+      let programStack = [];
+      let programState = {
+        currRecord: regexpRecords[currLevel],
+        currRegexp: regexpRecords[currLevel].regexp,
+        currLevel: currLevel,
+        textScope: textScope,
+        currentLinkageStartLevel: currentLinkageStartLevel
+      }
+
+      programStack[0] = programState;
+      while(programStack.length) {
+        let programState = programStack[programStack.length - 1];
         
-        let currMatch = textScope.match(currRegexp);
+        let currRecord = programState.currRecord;
+        let currRegexp = programState.currRegexp;
+        let currLevel = programState.currLevel;
+        let textScope = programState.textScope;
+        let currentLinkageStartLevel = programState.currentLinkageStartLevel;
+
+        let currMatch;
+        if (currRegexp.global) {
+          currMatch = currRegexp.exec(textScope);
+          if (currMatch) {
+            textScope = currMatch[currMatch.length - 1];
+
+            let nextLevel = currLevel + 1;
+            if (nextLevel < regexpRecords.length) {
+              programStack[programStack.length] = {
+                currRecord: regexpRecords[nextLevel],
+                currRegexp: regexpRecords[nextLevel].regexp,
+                currLevel: nextLevel,
+                textScope: textScope,
+                currentLinkageStartLevel: currentLinkageStartLevel
+              };
+            }
+
+            // Recurse down
+            continue; 
+          }
+         
+        } else {
+          currMatch = textScope.match(currRegexp);
+        }
+
+        // Commit the pop only when we are ready to add something to views or buffer
+        programStack.length = programStack.length - 1;
+
+        // TODO: If /g, then there is an automatic scope or is there?
         if (currRecord.scopeChildren) {
+          // TODO: not sure how this works anymore
           // If there are no matches at this level, all levels below will not match, so break;
           if (currMatch == null) {
-            break;
+            continue; // used to be break
           }
           textScope = currMatch[currMatch.length - 1];
         }
 
         let beginLink = linkLevels.get(currLevel);
         if (beginLink) {
-           currentLinkageStartLevel = currLevel;
+          currentLinkageStartLevel = currLevel;
         }
 
         if (currMatch) {
@@ -842,7 +886,7 @@ function asyncFilter(evt, regexpRecords, text, modes) {
           
           /** Views are only safe to save to if linkage constraints are satisfied. 
               Otherwise, wait for linkage to be resolved at the endLevel.
-           **/
+          **/
           if (!Number.isInteger(currentLinkageStartLevel)) {
             treeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
             orgModeView.appendChild(currLevel, currMatch[currMatch.length - 1]);
@@ -879,6 +923,19 @@ function asyncFilter(evt, regexpRecords, text, modes) {
           }
           
           currentLinkageStartLevel = null;
+        }
+
+        
+        let nextLevel = currLevel + 1;
+        if (nextLevel < regexpRecords.length) {
+          programStack[programStack.length] = {
+            currRecord: regexpRecords[nextLevel],
+            currRegexp: regexpRecords[nextLevel].regexp,
+            currLevel: nextLevel,
+            textScope: textScope,
+            currentLinkageStartLevel: currentLinkageStartLevel
+          };
+          
         }
       }
     }
