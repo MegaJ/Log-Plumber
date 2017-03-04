@@ -760,9 +760,9 @@ function asyncFilter(evt, regexpRecords, text, modes) {
   const DOMTargetParent = document.getElementById("treeView");
   const DOMTarget = DOMTargetParent.firstElementChild;
 
-  // For link levels feature...may need to be referenced in the program stack objects
   let resultBuffer = [];
   let resultBufferIndex = null;
+  let textProcess = new TextProcess();
   
   window.requestAnimationFrame(function scrapeBoxFiller() { // TODO: need to make scrapeBoxFiller inherit from Emitter so it can listen to events
     let matchIndex = 0;
@@ -788,7 +788,8 @@ function asyncFilter(evt, regexpRecords, text, modes) {
       }
       programStack[0] = programState;
 
-      textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView, treeView);
+      // TODO: should store its own private variables...like result Buffer index
+      textProcess.run(programStack, resultBuffer, orgModeView, treeView);
 
       window.requestAnimationFrame(() => {
         scrapeBox.value = orgModeView.orgText;
@@ -826,7 +827,7 @@ function asyncFilter(evt, regexpRecords, text, modes) {
       }
 
       programStack[0] = programState;
-      textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView, treeView);
+      textProcess.run(programStack, resultBuffer, orgModeView, treeView);
     }
 
     // to give impression of responsiveness, render a small portion
@@ -844,15 +845,28 @@ function asyncFilter(evt, regexpRecords, text, modes) {
   });
 }
 
-function textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView, treeView) {
+function TextProcess() {
+  this.resultBufferIndex = null;
+}
+
+TextProcess.prototype.run = function (programStack, resultBuffer, orgModeView, treeView) {    
   while(programStack.length) {
     let programState = programStack[programStack.length - 1];
     let currLevel = programState.currLevel;
     let textScope = programState.textScope;
     let currentLinkageStartLevel = programState.currentLinkageStartLevel;
+    let endLevel = linkLevels.get(currentLinkageStartLevel);
+    if (currLevel > endLevel) {
+      currentLinkageStartLevel = null;
+    }
 
     let currRecord = regexpRecords[currLevel];
     let currRegexp = currRecord.regexp;
+    
+    let beginLink = linkLevels.get(currLevel);
+    if (beginLink) {
+      currentLinkageStartLevel = currLevel;
+    }
 
     let currMatch;
     if (currRegexp.global) {
@@ -890,17 +904,13 @@ function textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView,
       textScope = currMatch[currMatch.length - 1];
     }
 
-    let beginLink = linkLevels.get(currLevel);
-    if (beginLink) {
-      currentLinkageStartLevel = currLevel;
-    }
 
     if (currMatch) {
       // Clear buffer if we are branching the tree from another parent
       // There is another parent if currLevel is ancestor of level where linking starts
       if (Number.isInteger(currentLinkageStartLevel) && currLevel <= currentLinkageStartLevel) {
-        resultBuffer = [];
-        resultBufferIndex = null;
+        resultBuffer.length = 0; // This was a subtle bug. I clear the resultBuffer while keeping the original reference.
+        this.resultBufferIndex = null;
       }
       
       /** Views are only safe to save to if linkage constraints are satisfied. 
@@ -914,31 +924,30 @@ function textProcess(programStack, resultBuffer, resultBufferIndex, orgModeView,
         let currOffset = currLevel - currentLinkageStartLevel;
         resultBuffer[currOffset] = currMatch[currMatch.length - 1];
 
-        if (resultBufferIndex === null) {
-          resultBufferIndex = currOffset;
+        if (this.resultBufferIndex === null) {
+          this.resultBufferIndex = currOffset;
         }
 
-        if (resultBufferIndex > 0) {
-          resultBufferIndex = resultBufferIndex > currOffset ? currOffset : resultBufferIndex;
+        if (this.resultBufferIndex > 0) {
+          this.resultBufferIndex = this.resultBufferIndex > currOffset ? currOffset : this.resultBufferIndex;
         }
       }
     }
 
-    let endLevel = linkLevels.get(currentLinkageStartLevel);
     // Loop through only a continguous subportion of the resultBuffer.
     // Flush result buffer to views if the level ending the link has a match before resultBuffer is cleared
     if (currLevel === endLevel) {
-      let shouldFlush = currMatch && Number.isInteger(resultBufferIndex);
+      let shouldFlush = currMatch && Number.isInteger(this.resultBufferIndex);
       if (shouldFlush) {
-        // TODO: I never figured out why resultBufferIndex + linkLength can exceed resultBuffer.length, but for the time being, this Math.min seems to work 
+        // TODO: I never figured out why this.resultBufferIndex + linkLength can exceed resultBuffer.length, but for the time being, this Math.min seems to work 
         let linkLength = endLevel - currentLinkageStartLevel + 1;
         let runLength = Math.min(resultBuffer.length, linkLength);
-        for (let k = resultBufferIndex; k < runLength; k++) {
+        for (let k = this.resultBufferIndex; k < runLength; k++) {
           treeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
           orgModeView.appendChild(parseInt(currentLinkageStartLevel) + k, resultBuffer[k]);
         }
 
-        resultBufferIndex = null;
+        this.resultBufferIndex = null;
       }
       
       currentLinkageStartLevel = null;
