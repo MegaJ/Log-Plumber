@@ -40,9 +40,9 @@ require('electron-context-menu')({
 
 })();
 
-
+// TODO: Make an "Open as epub" button or something, where they can just save the document
 function requireModulesNeedingFindWidget(findWidgetWebContents) {
-  require(path.join(__dirname, "main-process", "modal.js")).initialize(findWidgetWebContents);
+  //require(path.join(__dirname, "main-process", "modal.js")).initialize(findWidgetWebContents);
 }
 
 

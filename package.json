@@ -1,7 +1,7 @@
 {
   "name": "Log Plumber",
   "version": "1.0.0",
-  "description": "The plumber's log scraper and miscellaneous automater tool.",
+  "description": "A hackable regular expression framework for log parsing into hierarchichal formats.",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
@@ -12,10 +12,12 @@
     "Plumber",
     "maintenance",
     "regex",
+    "regexp",
+    "regular expression",
     "log"
   ],
-  "author": "GitHub",
-  "license": "GPL 3",
+  "author": "Mega J",
+  "license": "Afferro GPL 3",
   "devDependencies": {
     "devtron": "^1.4.0",
     "electron": "^1.4.1",
