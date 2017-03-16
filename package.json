@@ -1,10 +1,11 @@
 {
-  "name": "Log Plumber",
-  "version": "1.0.0",
+  "name": "Log-Plumber",
+  "version": "0.1.0",
   "description": "A hackable regular expression framework for log parsing into hierarchichal formats.",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-packager . LogPlumber"
   },
   "repository": "",
   "keywords": [
@@ -17,11 +18,11 @@
     "log"
   ],
   "author": "Mega J",
-  "license": "Afferro GPL 3",
+  "license": "AGPL-3",
   "devDependencies": {
     "devtron": "^1.4.0",
-    "electron": "^1.4.1",
-    "electron-context-menu": "^0.8.0"
+    "electron-context-menu": "^0.8.0",
+    "electron-packager": "^8.5.2"
   },
   "dependencies": {
     "glob": "^7.1.1"

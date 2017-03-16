@@ -10,8 +10,6 @@ global.rendererPath =  path.join(__dirname, "renderer-processes");
 const electron = require('electron')
 const {app, BrowserWindow, ipcMain, Menu, webContents} = electron;
 
-//const expose = require('../expose');
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
@@ -28,7 +26,7 @@ require('electron-context-menu')({
   let findWidgetWebContents;
   
   ipcMain.once("findWidget-webContents-id", (event, arg) => {
-    console.log("findWidgetContentsId received by main: ", event);
+    //console.log("findWidgetContentsId received by main: ", event);
     findWidgetWebContents = event.sender;
     requireModulesNeedingFindWidget(findWidgetWebContents);
   });

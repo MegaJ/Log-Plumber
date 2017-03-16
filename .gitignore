@@ -2,9 +2,10 @@ node_modules
 
 # Emacs things
 \#*\#
-.#*
+.\#*
 
 *.org
 .directory
 *.txt
 *.text
+/*.png

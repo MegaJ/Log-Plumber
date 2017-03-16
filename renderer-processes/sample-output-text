@@ -1,0 +1,21 @@
+07 Feb 2008 13:30:52,596 DEBUG insert into example.customer (CATEGORY, 
+CREATE_USER_ID, CREATE_TIMESTAMP, UPDATE_USER_ID, UPDATE_TIMESTAMP, OID) 
+values (?, ?, ?, ?, ?, ?) - org.hibernate.SQL [main] [44513 ms]
+
+07 Feb 2008 13:30:52,596 DEBUG binding 'S' to parameter: 1 - 
+hibernate.type.StringType [main] [44513 ms]
+
+07 Feb 2008 13:30:52,596 DEBUG binding 'junit test' to parameter: 2 - 
+hibernate.type.StringType [main] [44513 ms]
+
+07 Feb 2008 13:30:52,596 DEBUG binding '2008-02-07 13:30:52' to parameter: 3 - 
+hibernate.type.DbTimestampType [main] [44513 ms]
+
+07 Feb 2008 13:30:52,596 DEBUG binding '2008-02-07 13:30:52' to parameter: 4 - 
+hibernate.type.TimestampType [main] [44513 ms]
+
+07 Feb 2008 13:30:52,596 DEBUG binding 'junit test' to parameter: 5 - 
+hibernate.type.StringType [main] [44513 ms]
+
+07 Feb 2008 13:30:52,596 DEBUG binding '2691102' to parameter: 6 - 
+hibernate.type.LongType [main] [44513 ms]
