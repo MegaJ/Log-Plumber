@@ -43,7 +43,7 @@
 
     <main class="content">
       <section id="section.scrape" class="section">
-        <h3 class="fat-header bottom-shadow">The Plumber's Ledger</h3>
+        <h3 class="fat-header bottom-shadow">Regular Expressions</h3>
         <div class="button-row flex-container">
           <button id="ledgerChooseFile" class="tertiary-button">Load From JSON</button>
           <button id="ledgerSave" class="tertiary-button">Save As JSON...</button>
@@ -72,7 +72,7 @@
                   
                   <strong>◉</strong>
                   <p class="tooltiptext tooltip-bottom"><strong>g:</strong>
-                    Regular expression is global and will match against entire text body instead of stopping at the end of lines.
+                    Regular expression is global and will match against entire text body instead of stopping at the end of lines. Matches do not specify a level, but create log units for child regular expressions to parse.
                   </p>
 
                 </label>
@@ -99,7 +99,7 @@
             </div>
             </label>
 
-            <input id="regexInput0" class="regexInput flex-containee-large left-margin"/>
+            <input id="regexInput0" class="regexInput flex-containee-large left-margin" placeholder="type in a regexp here"/>
           </div>
           <code id="regexError0"></code>
           
@@ -132,7 +132,7 @@
               <input id="i2" name="i" type="checkbox" class="regexOption"/><label for="i2" class="i">◉</label>
               <input id="m2" name="m" type="checkbox" class="regexOption"/><label for="m2" class="m">◉</label>
             </div>
-            <input id="regexInput2"  class="regexInput flex-containee-large left-margin"/>
+            <input id="regexInput2"  class="regexInput flex-containee-large left-margin" placeholder="type in a regexp here"/>
           </div>
           <code id="regexError2"></code>
           <div class="flex-container">
@@ -147,7 +147,7 @@
               <input id="m3" name="m" type="checkbox" class="regexOption"/><label for="m3" class="m">◉</label>
               <!-- <input id="u3" name="u" type="checkbox" class="regexOption"/><label for="u3" class="u">◉</label> -->
             </div>
-            <input id="regexInput3" class="regexInput flex-containee-large left-margin"/>
+            <input id="regexInput3" class="regexInput flex-containee-large left-margin" placeholder="type in a regexp here"/>
             
           </div>
           <code id="regexError3"></code>

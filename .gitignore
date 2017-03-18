@@ -6,6 +6,7 @@ node_modules
 
 prepackage
 release-builds
+selfnotes
 *.zip
 *.rar
 *-samples

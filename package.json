@@ -6,8 +6,7 @@
   "repository": "",
   "scripts": {
     "start": "electron .",
-    "prepkg": "node prepackage.js && bash moveExamples.sh",
-    "pkg": "npm run prepkg && electron-packager ./prepackage LogPlumber --overwrite --prune=true --out=release-builds --electron-version=1.4.13"
+    "pkg": "electron-packager . --overwrite --prune=true --out=release-builds --electron-version=1.4.13 --ignore='selfnotes|sample-output-2.txt'"
   },
   "keywords": [
     "Electron",
@@ -23,11 +22,11 @@
   "devDependencies": {
     "copy": "^0.3.0",
     "devtron": "^1.4.0",
-    "electron-context-menu": "^0.8.0",
     "electron-packager": "^8.5.2",
     "gitignore-to-glob": "^0.3.0"
   },
   "dependencies": {
-    "glob": "^7.1.1"
+    "glob": "^7.1.1",
+    "electron-context-menu": "^0.8.0"
   }
 }

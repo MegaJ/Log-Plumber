@@ -13,7 +13,12 @@ $ git clone https://github.com/MegaJ/Log-Plumber.git
 $ cd Log-Plumber
 $ npm install
 
+# If you want to run from source code
 $ electron .
+
+# If you want to build an executable (tested on linux so far only)
+# output folder is release-builds
+$ npm run pkg
 ```
 
 ### Example Workflow
@@ -53,7 +58,7 @@ You would be able to group everything that happens after `cleaning dcc_db` under
 If you wish to have multiple types of matches be at *L1*, you will have to logically OR your regular expression matching `cleaning dcc_db` with another expresssion matching your other desired match.
 
 ### Outputted Text
-Outputted text from a regular expression reflects only the deepest level capture group of the regular expression. 
+Outputted text from a regular expression reflects only the deepest level capture group of the regular expression. (TODO: I could allow all capture groups to be processed) 
 * Example: A regular expression `ERROR: ([\s\S]*)` will output the text in a log unit from whatever happens after the text "Error: ". Thus if the input text is "ERROR: System failure", then "System failure" will show up on the corresponding tree level.
 
 ### Scoped Text

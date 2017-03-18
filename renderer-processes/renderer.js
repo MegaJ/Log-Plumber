@@ -83,28 +83,31 @@ const regexpRecords = [
   {
     //syslogd
     //regexp: /(?:[\s\S](?![a-zA-Z]{3}\s(?:\s|\d)\d\s\d{2}:\d{2}:\d{2}\s[^\s]*\s[^\s]*:))+/,
-     regexp: /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
+    //log4j:  /(?:[\s\S](?!\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
+    regexp: /(?:[\s\S](?!\d{2} Feb \d{4} \d{2}:\d{2}:\d{2},\d{3} (?:DEBUG|INFO)))+/,
     regexpOpts: "u",
     scopeChildren: true
   },
 
   {
-    regexp: / HIT: ([\s\S]*)/,
-    regexpOpts: "u",
-    scopeChildren: false
-  },
-
-  {
-    regexp:  /\((.*)\) *[:|-]/,
-    regexpOpts: "u",
-    scopeChildren: false
-  },
-
-  {
+    // regexp: / HIT: ([\s\S]*)/,
     regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
     regexpOpts: "u",
     scopeChildren: false
-  }
+  },
+
+  {
+//    regexp:  /\((.*)\) *[:|-]/,
+    regexp: /binding '(.*)'/,
+    regexpOpts: "u",
+    scopeChildren: false
+  }// ,
+
+  // {
+  //   regexp: /(?:SELECT|UPDATE|INSERT|DECLARE|ALTER|CREATE|DROP|GRANT)[\s\S]*/,
+  //   regexpOpts: "u",
+  //   scopeChildren: false
+  // }
 ]
 
 function startUp () {

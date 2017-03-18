@@ -14,13 +14,13 @@ const {app, BrowserWindow, ipcMain, Menu, webContents} = electron;
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-// require('electron-context-menu')({
-//     prepend: (params, browserWindow) => [{
-//         label: 'Rainbow',
-//         // only show it when right-clicking images 
-//         visible: params.mediaType === 'image'
-//     }]
-// });
+require('electron-context-menu')({
+    prepend: (params, browserWindow) => [{
+        label: 'Rainbow',
+        // only show it when right-clicking images 
+        visible: params.mediaType === 'image'
+    }]
+});
 
 (function setupListeners () {
   let findWidgetWebContents;
