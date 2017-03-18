@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "A hackable regular expression framework for log parsing into hierarchichal formats.",
   "main": "main.js",
+  "repository": "",
   "scripts": {
     "start": "electron .",
-    "build": "electron-packager . LogPlumber"
+    "prepkg": "node prepackage.js && bash moveExamples.sh",
+    "pkg": "npm run prepkg && electron-packager ./prepackage LogPlumber --overwrite --prune=true --out=release-builds --electron-version=1.4.13"
   },
-  "repository": "",
   "keywords": [
     "Electron",
     "Plumber",
@@ -20,9 +21,11 @@
   "author": "Mega J",
   "license": "AGPL-3",
   "devDependencies": {
+    "copy": "^0.3.0",
     "devtron": "^1.4.0",
     "electron-context-menu": "^0.8.0",
-    "electron-packager": "^8.5.2"
+    "electron-packager": "^8.5.2",
+    "gitignore-to-glob": "^0.3.0"
   },
   "dependencies": {
     "glob": "^7.1.1"
