@@ -2,7 +2,7 @@
 
 A hackable regular expression framework for log parsing into hierarchichal formats.
 
-// TODO: put gif of what it does here
+![Screenshot](README-Images/hibernate-log-regexps.png)
 
 ## Quick Start
 
